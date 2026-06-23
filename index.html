@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>XO-DA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#08080E;--violet:#BFA8FF;--rose:#FFB8D0;--gold:#C8A96E;
+  --white:#F5F5F7;--muted:rgba(245,245,247,.45);
+  --gb:rgba(255,255,255,.06);--gborder:rgba(255,255,255,.12);
+  --ok:#6ee7b7;--warn:#C8A96E;--err:#f87171;--nav-h:62px;
+}
+html{scroll-behavior:smooth;overflow-x:hidden;max-width:100vw}
+body{background:var(--black);color:var(--white);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;max-width:100vw}
+#canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+#loginScreen,#appShell{transition:opacity .45s ease}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 20%,rgba(191,168,255,.13),transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(255,184,208,.1),transparent 60%),var(--black)}
+.login-box{width:100%;max-width:400px;background:rgba(255,255,255,.05);border:1px solid var(--gborder);border-radius:28px;padding:48px 40px;backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.5);animation:loginIn .7s cubic-bezier(.25,.8,.25,1);margin:16px}
+@keyframes loginIn{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:none}}
+.login-logo{font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:3.5rem;letter-spacing:-.02em;background:linear-gradient(135deg,var(--white) 20%,var(--violet) 60%,var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.login-tagline{font-size:.72rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:44px}
+.login-label{font-size:.68rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);text-align:left;margin-bottom:8px;display:block}
+.login-input{width:100%;padding:14px 18px;background:rgba(255,255,255,.06);border:1px solid var(--gborder);border-radius:14px;color:var(--white);font-family:'Inter',sans-serif;font-size:.95rem;outline:none;transition:border-color .3s,background .3s;margin-bottom:18px}
+.login-input:focus{border-color:rgba(191,168,255,.55);background:rgba(191,168,255,.06)}
+.login-input::placeholder{color:var(--muted)}
+.login-btn{width:100%;padding:15px;border-radius:100px;border:1px solid rgba(191,168,255,.35);background:linear-gradient(135deg,rgba(191,168,255,.3),rgba(255,184,208,.2));backdrop-filter:blur(20px);color:var(--white);font-family:'Inter',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .35s}
+.login-btn:hover{background:linear-gradient(135deg,rgba(191,168,255,.45),rgba(255,184,208,.3));transform:translateY(-1px)}
+.login-err{font-size:.8rem;color:var(--err);opacity:0;transition:opacity .3s;margin-top:10px;min-height:18px}
+
+/* APP */
+#appShell{display:none;opacity:0;position:relative;z-index:1}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:var(--nav-h);background:rgba(8,8,14,.9);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--gborder);gap:8px;width:100%;max-width:100vw;box-sizing:border-box}
+.nav-logo{font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:1.7rem;background:linear-gradient(135deg,var(--white) 30%,var(--violet) 70%,var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;cursor:pointer;white-space:nowrap;user-select:none;flex-shrink:0}
+.nav-links{display:flex;gap:4px;list-style:none;align-items:center;flex:1;justify-content:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.8rem;font-weight:500;padding:7px 13px;border-radius:100px;transition:color .3s,background .3s;white-space:nowrap}
+.nav-links a:hover{color:var(--white);background:var(--gb)}
+.nav-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+#roleLabel{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.cart-txt{display:inline}
+.nav-burger{display:none;flex-direction:column;gap:5px;width:38px;height:38px;align-items:center;justify-content:center;border:1px solid var(--gborder);border-radius:10px;background:var(--gb);cursor:pointer;transition:all .3s;flex-shrink:0}
+.nav-burger span{display:block;width:18px;height:1.5px;background:var(--white);border-radius:1px;transition:all .3s}
+.nav-burger:hover{border-color:rgba(191,168,255,.4)}
+
+/* Mobile nav */
+#mobileNav{display:none;position:fixed;inset:0;z-index:200;background:rgba(8,8,14,.97);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:0;transition:opacity .35s;pointer-events:none}
+#mobileNav.open{display:flex;opacity:1;pointer-events:all}
+.mnav-close{position:absolute;top:18px;right:18px;width:42px;height:42px;border-radius:50%;border:1px solid var(--gborder);background:var(--gb);color:var(--white);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.mnav-link{font-family:'Playfair Display',serif;font-style:italic;font-size:2.2rem;font-weight:600;color:var(--muted);text-decoration:none;padding:12px 28px;border-radius:16px;transition:color .3s,background .3s;text-align:center}
+.mnav-link:hover{color:var(--white);background:var(--gb)}
+
+@media(max-width:700px){
+  nav{padding:0 14px}
+  .nav-links{display:none}
+  #roleLabel{display:none}
+  .nav-burger{display:flex}
+  .cart-txt{display:none}
+  #navLogoutBtn{display:none}
+  /* Logo y burger se reparten el nav sin estirar */
+  .nav-logo{font-size:1.45rem}
+  .nav-right{gap:4px}
+}
+
+/* BUTTONS */
+.btn-glass{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:100px;border:1px solid var(--gborder);background:var(--gb);backdrop-filter:blur(20px);color:var(--white);font-family:'Inter',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .3s cubic-bezier(.25,.8,.25,1);position:relative;overflow:hidden;white-space:nowrap}
+.btn-glass::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(191,168,255,.18),rgba(255,184,208,.1));opacity:0;transition:opacity .3s}
+.btn-glass:hover{border-color:rgba(191,168,255,.4);transform:translateY(-1px);box-shadow:0 8px 28px rgba(191,168,255,.15)}
+.btn-glass:hover::before{opacity:1}
+.btn-primary{background:linear-gradient(135deg,rgba(191,168,255,.22),rgba(255,184,208,.14));border-color:rgba(191,168,255,.32)}
+.btn-icon{width:32px;height:32px;border-radius:9px;border:1px solid var(--gborder);background:var(--gb);color:var(--white);font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .3s}
+.btn-icon:hover{background:rgba(191,168,255,.2);border-color:rgba(191,168,255,.4)}
+.btn-icon.danger:hover{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.4)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 80px;position:relative}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;animation:floatOrb 12s ease-in-out infinite}
+.orb-1{width:480px;height:480px;background:var(--violet);top:-80px;left:-80px;opacity:.26}
+.orb-2{width:380px;height:380px;background:var(--rose);bottom:0;right:-60px;opacity:.22;animation-duration:15s;animation-direction:reverse}
+.orb-3{width:280px;height:280px;background:var(--gold);top:45%;left:55%;opacity:.13;animation-duration:10s;animation-delay:3s}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(28px,-36px) scale(1.04)}66%{transform:translate(-18px,18px) scale(.97)}}
+.hero-eye{font-size:.68rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:22px;display:inline-flex;align-items:center;gap:10px}
+.hero-eye::before,.hero-eye::after{content:'';display:block;width:28px;height:1px;background:var(--gold)}
+.hero h1{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(3.2rem,9vw,7.5rem);font-weight:700;line-height:1;letter-spacing:-.03em;margin-bottom:8px;background:linear-gradient(160deg,var(--white) 0%,rgba(245,245,247,.9) 40%,var(--violet) 80%,var(--rose) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(.95rem,2.5vw,1.5rem);color:var(--muted);margin-bottom:44px}
+.hero-acts{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+
+/* SECTIONS */
+section{padding:90px 24px;max-width:1360px;margin:0 auto}
+.sec-label{font-size:.68rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--violet);margin-bottom:14px}
+.sec-title{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(1.8rem,4vw,3rem);font-weight:600;line-height:1.15;color:var(--white);margin-bottom:40px}
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--gborder),transparent)}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+.feature-card{background:var(--gb);border:1px solid var(--gborder);border-radius:20px;padding:26px;backdrop-filter:blur(20px);transition:transform .3s,border-color .3s}
+.feature-card:hover{transform:translateY(-4px);border-color:rgba(191,168,255,.22)}
+.feature-sym{font-size:1.3rem;color:var(--violet);margin-bottom:14px;line-height:1}
+.feature-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1.08rem;font-weight:600;color:var(--white);margin-bottom:8px}
+.feature-desc{font-size:.8rem;color:var(--muted);line-height:1.7}
+
+/* FILTER TABS */
+.tabs-row{display:flex;gap:4px;margin-bottom:32px;background:var(--gb);border:1px solid var(--gborder);border-radius:100px;padding:5px;width:fit-content;max-width:100%;backdrop-filter:blur(20px);flex-wrap:wrap}
+.filter-tab{padding:7px 16px;border-radius:100px;border:none;background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:.79rem;font-weight:500;cursor:pointer;transition:all .3s}
+.filter-tab.active{background:linear-gradient(135deg,rgba(191,168,255,.28),rgba(255,184,208,.18));color:var(--white);border:1px solid rgba(191,168,255,.28);box-shadow:0 4px 14px rgba(191,168,255,.14)}
+
+/* PRODUCT GRID */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.empty-state{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted)}
+.empty-sym{font-size:1.8rem;color:rgba(191,168,255,.28);margin-bottom:14px}
+
+/* PRODUCT CARD */
+.product-card{background:var(--gb);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--gborder);border-radius:20px;overflow:hidden;transition:transform .4s cubic-bezier(.25,.8,.25,1),border-color .4s,box-shadow .4s;position:relative;display:flex;flex-direction:column}
+.product-card:hover{transform:translateY(-6px) scale(1.01);border-color:rgba(191,168,255,.28);box-shadow:0 22px 60px rgba(0,0,0,.4)}
+.product-img{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.product-initial{font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:4rem;color:rgba(255,255,255,.22);line-height:1;user-select:none;transition:transform .4s}
+.product-card:hover .product-initial{transform:scale(1.1)}
+.cat-lifestyle{background:linear-gradient(135deg,#1a1028,#0f0a18)}
+.cat-fashion{background:linear-gradient(135deg,#1a0d14,#120810)}
+.cat-beauty{background:linear-gradient(135deg,#1a1508,#11100a)}
+.cat-tech{background:linear-gradient(135deg,#0d1020,#0a0c18)}
+.cat-default{background:linear-gradient(135deg,#141414,#0a0a0a)}
+.product-badge{position:absolute;top:11px;right:11px;padding:3px 10px;border-radius:100px;font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;backdrop-filter:blur(10px)}
+.badge-new{background:rgba(191,168,255,.2);border:1px solid rgba(191,168,255,.38);color:var(--violet)}
+.badge-hot{background:rgba(255,184,208,.16);border:1px solid rgba(255,184,208,.38);color:var(--rose)}
+.badge-out{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--muted)}
+.product-body{padding:18px;flex:1;display:flex;flex-direction:column}
+.product-cat{font-size:.61rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.product-name{font-family:'Playfair Display',serif;font-style:italic;font-size:1.1rem;font-weight:600;color:var(--white);margin-bottom:6px;line-height:1.3}
+.product-desc{font-size:.78rem;color:var(--muted);line-height:1.65;margin-bottom:16px;flex:1}
+.product-footer{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:auto}
+.product-price{font-size:1.28rem;font-weight:600;color:var(--white);letter-spacing:-.02em}
+.price-usd{font-size:.7rem;font-weight:400;color:var(--muted);margin-left:2px}
+.product-stock{font-size:.67rem;margin-top:2px}
+.stock-ok{color:var(--ok)}.stock-low{color:var(--warn)}.stock-out{color:var(--err)}
+.btn-add-cart{flex-shrink:0;width:40px;height:40px;border-radius:50%;border:1px solid var(--gborder);background:var(--gb);backdrop-filter:blur(10px);color:var(--white);font-size:1.2rem;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;line-height:1}
+.btn-add-cart:hover{background:rgba(191,168,255,.2);border-color:rgba(191,168,255,.4);transform:scale(1.1)}
+.btn-add-cart:disabled{opacity:.32;cursor:not-allowed;transform:none}
+
+/* PANEL */
+.glass-panel{background:var(--gb);border:1px solid var(--gborder);border-radius:22px;padding:24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin-bottom:20px}
+.panel-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--gborder);flex-wrap:wrap;gap:10px}
+.panel-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1.15rem;font-weight:600;color:var(--white)}
+.panel-note{font-size:.74rem;color:var(--muted)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:11px;margin-bottom:22px}
+.stat-card{background:rgba(255,255,255,.04);border:1px solid var(--gborder);border-radius:16px;padding:16px;transition:border-color .3s}
+.stat-card:hover{border-color:rgba(191,168,255,.24)}
+.stat-label{font-size:.61rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.stat-value{font-size:1.7rem;font-weight:600;color:var(--white);letter-spacing:-.03em}
+.stat-note{font-size:.65rem;color:var(--ok);margin-top:3px}
+
+/* OWNER TABS */
+.owner-tabs{display:flex;gap:3px;margin-bottom:22px;background:var(--gb);border:1px solid var(--gborder);border-radius:13px;padding:4px;width:fit-content;flex-wrap:wrap;max-width:100%}
+.owner-tab{padding:8px 15px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:.77rem;font-weight:500;cursor:pointer;transition:all .3s;white-space:nowrap}
+.owner-tab.active{background:rgba(191,168,255,.14);color:var(--white);border:1px solid rgba(191,168,255,.2)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+input:not([type=color]),textarea,select{background:rgba(255,255,255,.05);border:1px solid var(--gborder);border-radius:10px;padding:10px 14px;color:var(--white);font-family:'Inter',sans-serif;font-size:.88rem;outline:none;transition:border-color .3s,background .3s;width:100%}
+input:not([type=color]):focus,textarea:focus,select:focus{border-color:rgba(191,168,255,.48);background:rgba(191,168,255,.04)}
+select option{background:#1a1a2e;color:var(--white)}
+textarea{resize:vertical;min-height:78px}
+
+/* TABLES */
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.admin-tbl{width:100%;border-collapse:collapse;min-width:540px}
+.admin-tbl th{font-size:.61rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);padding:10px 12px;text-align:left;border-bottom:1px solid var(--gborder);white-space:nowrap}
+.admin-tbl td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem;color:var(--white);vertical-align:middle}
+.admin-tbl tr:hover td{background:rgba(255,255,255,.025)}
+.tbl-prod-name{font-weight:500;font-size:.84rem}
+.tbl-prod-sub{font-size:.69rem;color:var(--muted);margin-top:2px}
+.prod-thumb{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:1.1rem;color:rgba(255,255,255,.35)}
+.s-badge{padding:3px 10px;border-radius:100px;font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:inline-block}
+.s-pendiente{background:rgba(200,169,110,.14);border:1px solid rgba(200,169,110,.28);color:var(--gold)}
+.s-pagado{background:rgba(191,168,255,.14);border:1px solid rgba(191,168,255,.28);color:var(--violet)}
+.s-enviado{background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.26);color:var(--ok)}
+.s-entregado{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.26);color:#34d399}
+.status-sel{padding:5px 10px;font-size:.75rem;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--gborder);color:var(--white);cursor:pointer;outline:none}
+
+/* CATEGORIES EDITOR */
+.cat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.cat-chip{display:flex;align-items:center;gap:7px;background:rgba(191,168,255,.07);border:1px solid rgba(191,168,255,.18);border-radius:100px;padding:5px 14px;font-size:.82rem;color:var(--white)}
+.cat-chip-del{cursor:pointer;color:var(--muted);font-size:.85rem;border:none;background:none;transition:color .2s;display:flex;align-items:center;line-height:1;padding:0}
+.cat-chip-del:hover{color:var(--err)}
+.cat-add-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cat-add-input{flex:1;min-width:150px}
+
+/* SITE EDITOR */
+.site-section{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px;margin-bottom:16px}
+.site-section-label{font-size:.61rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--violet);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.feature-edit-row{display:flex;gap:10px;align-items:flex-start;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:10px;position:relative}
+.feature-edit-sym{width:62px;flex-shrink:0}
+.feature-edit-sym input{text-align:center;font-size:1.1rem;padding:8px}
+.feature-edit-main{flex:1;display:flex;flex-direction:column;gap:8px}
+.feature-order{font-size:.65rem;color:var(--muted);margin-bottom:4px}
+
+/* THEME EDITOR */
+.theme-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+.color-group{display:flex;flex-direction:column;gap:8px}
+.color-group label{font-size:.63rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.color-input-row{display:flex;gap:8px;align-items:center}
+input[type=color]{width:44px;height:38px;border-radius:9px;border:1px solid var(--gborder);background:transparent;cursor:pointer;padding:3px;flex-shrink:0}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0;border-radius:6px}
+input[type=color]::-webkit-color-swatch{border:none;border-radius:6px}
+.color-hex{flex:1;min-width:0}
+.theme-preview{display:flex;gap:10px;align-items:center;padding:14px;background:rgba(255,255,255,.03);border-radius:12px;margin-bottom:14px;flex-wrap:wrap}
+.theme-dot{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.15)}
+.theme-dot-label{font-size:.7rem;color:var(--muted);margin-top:4px;text-align:center;width:28px}
+
+/* BANK */
+.bank-preview{background:rgba(191,168,255,.05);border:1px solid rgba(191,168,255,.16);border-radius:13px;padding:16px 18px;margin-bottom:18px}
+
+/* CART */
+.cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;opacity:0;pointer-events:none;transition:opacity .4s;backdrop-filter:blur(4px)}
+.cart-overlay.open{opacity:1;pointer-events:all}
+.cart-sidebar{position:fixed;top:0;right:-110%;width:min(420px,100vw);height:100dvh;background:rgba(10,10,20,.97);backdrop-filter:blur(40px) saturate(200%);-webkit-backdrop-filter:blur(40px) saturate(200%);border-left:1px solid var(--gborder);z-index:200;transition:right .5s cubic-bezier(.25,.8,.25,1);display:flex;flex-direction:column;padding:22px}
+.cart-sidebar.open{right:0}
+.cart-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.cart-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1.45rem;font-weight:600;color:var(--white)}
+.cart-sub-txt{font-size:.77rem;color:var(--muted);margin-top:3px}
+.cart-items{flex:1;overflow-y:auto;padding-right:2px}
+.cart-items::-webkit-scrollbar{width:2px}
+.cart-items::-webkit-scrollbar-thumb{background:var(--gborder);border-radius:1px}
+.cart-empty{text-align:center;padding:60px 0;color:var(--muted)}
+.cart-empty-sym{font-size:1.6rem;color:rgba(191,168,255,.24);margin-bottom:12px;line-height:1}
+.cart-item{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.cart-thumb{width:48px;height:48px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:1.15rem;color:rgba(255,255,255,.3)}
+.cart-info{flex:1;min-width:0}
+.cart-iname{font-size:.87rem;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cart-iprice{font-size:.76rem;color:var(--muted);margin-bottom:6px}
+.cart-qty{display:flex;align-items:center;gap:7px}
+.cqty-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--gborder);background:var(--gb);color:var(--white);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;line-height:1;border:none}
+.cqty-btn:hover{border-color:rgba(191,168,255,.4);background:rgba(191,168,255,.1)}
+.cart-rm{cursor:pointer;color:var(--muted);font-size:.9rem;transition:color .2s;padding:5px;flex-shrink:0;border:none;background:none;line-height:1}
+.cart-rm:hover{color:var(--err)}
+.cart-footer{padding-top:16px;border-top:1px solid var(--gborder);margin-top:14px}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.cart-total-lbl{font-size:.8rem;color:var(--muted)}
+#cartTotal{font-size:1.38rem;font-weight:600;color:var(--white)}
+.cart-badge-dot{position:absolute;top:-5px;right:-5px;width:17px;height:17px;background:var(--rose);border-radius:50%;font-size:.57rem;font-weight:700;display:none;align-items:center;justify-content:center;color:#08080E;line-height:1}
+#cartFab{position:fixed;bottom:24px;right:24px;z-index:150;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(191,168,255,.28),rgba(255,184,208,.18));border:1px solid rgba(191,168,255,.4);backdrop-filter:blur(20px);color:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(191,168,255,.2);transition:all .3s}
+#cartFab:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(191,168,255,.3)}
+
+/* CHECKOUT MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;opacity:0;pointer-events:none;transition:opacity .35s;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-box{width:100%;max-width:510px;max-height:92dvh;overflow-y:auto;background:rgba(11,10,20,.98);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid var(--gborder);border-radius:22px;padding:28px;animation:modalIn .35s cubic-bezier(.25,.8,.25,1)}
+.modal-box::-webkit-scrollbar{width:2px}
+.modal-box::-webkit-scrollbar-thumb{background:var(--gborder);border-radius:1px}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:none}}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1.35rem;font-weight:600;color:var(--white)}
+.modal-sec{margin-bottom:22px}
+.modal-sec-lbl{font-size:.61rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--violet);margin-bottom:11px}
+.order-line{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.84rem}
+.order-line:last-child{border-bottom:none}
+.order-total{display:flex;justify-content:space-between;align-items:center;padding-top:13px;border-top:1px solid var(--gborder);margin-top:7px}
+.order-total-lbl{font-size:.84rem;color:var(--muted)}
+.order-total-val{font-size:1.28rem;font-weight:600;color:var(--white)}
+.transfer-box{background:rgba(191,168,255,.05);border:1px solid rgba(191,168,255,.16);border-radius:13px;padding:16px 18px}
+.tr-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.tr-row:last-child{border-bottom:none}
+.tr-key{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:1px}
+.tr-val{font-size:.84rem;color:var(--white);font-weight:500;text-align:right;max-width:62%;word-break:break-all}
+.tr-note{font-size:.74rem;color:var(--gold);margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);line-height:1.65}
+
+/* TOAST */
+#toastWrap{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none}
+.toast{background:rgba(12,12,22,.97);border:1px solid var(--gborder);border-radius:100px;padding:11px 22px;font-size:.82rem;color:var(--white);backdrop-filter:blur(20px);box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .4s cubic-bezier(.25,.8,.25,1) forwards;white-space:nowrap;transition:opacity .4s}
+.toast.ok{border-color:rgba(110,231,183,.3)}.toast.err{border-color:rgba(248,113,113,.3)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+
+/* FOOTER */
+footer{padding:44px 24px;border-top:1px solid var(--gborder);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;max-width:1360px;margin:0 auto}
+.footer-logo{font-family:'Playfair Display',serif;font-style:italic;font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,var(--white),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.live-row{display:flex;align-items:center;gap:6px;font-size:.71rem;color:var(--violet)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MOBILE */
+@media(max-width:700px){
+  .hero{padding-top:calc(var(--nav-h) + 36px);padding-bottom:52px;min-height:unset;padding-left:16px;padding-right:16px}
+  section{padding:56px 16px}
+  .sec-title{margin-bottom:26px;font-size:1.9rem}
+  .products-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .product-initial{font-size:2.5rem}
+  .product-img{aspect-ratio:1/1}
+  .product-name{font-size:.95rem}
+  .product-body{padding:12px}
+  .product-desc{display:none}
+  .product-price{font-size:1.05rem}
+  .btn-add-cart{width:34px;height:34px;font-size:1rem}
+  .form-grid{grid-template-columns:1fr}
+  .theme-row{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .owner-tabs{gap:2px}
+  .owner-tab{padding:7px 11px;font-size:.72rem}
+  footer{padding:32px 16px;flex-direction:column;align-items:flex-start;gap:10px}
+  .glass-panel{padding:18px}
+  .orb-1{width:220px;height:220px;left:-40px}
+  .orb-2{width:180px;height:180px;right:-30px}
+  .orb-3{width:130px;height:130px}
+  .hero-acts{width:100%;flex-direction:column;align-items:stretch}
+  .hero-acts .btn-glass{justify-content:center;width:100%}
+}
+@media(max-width:380px){
+  .products-grid{grid-template-columns:1fr}
+  .product-img{aspect-ratio:4/3}
+  .product-initial{font-size:4rem}
+  .product-desc{display:block}
+}
+
+/* MOBILE CENTERING FIXES */
+@media(max-width:700px){
+  section{display:flex;flex-direction:column;align-items:center}
+  #nosotros,#tienda{text-align:center}
+  .sec-label,.sec-title{width:100%}
+  #featuresGrid.features-grid,.products-grid{width:100%}
+  .tabs-row{margin:0 auto 28px;justify-content:center}
+  #panel{align-items:stretch}
+  #panel .sec-label,#panel .sec-title{text-align:center}
+  .stats-row{width:100%}
+  .owner-tabs{margin:0 auto 22px;justify-content:center;width:100%}
+  .glass-panel{width:100%}
+  .panel-hdr{justify-content:center;text-align:center}
+  .login-box{width:calc(100% - 32px)}
+  .hero-acts{width:100%}
+  footer{align-items:center;text-align:center;justify-content:center}
+}
+
+/* PRODUCT / THUMB IMAGES */
+.product-img img,.prod-thumb img,.cart-thumb img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.img-upload-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.img-preview{width:64px;height:64px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--gborder);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted);font-size:.7rem;text-align:center}
+.img-preview img{width:100%;height:100%;object-fit:cover}
+.file-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:100px;border:1px solid var(--gborder);background:var(--gb);color:var(--white);font-size:.8rem;cursor:pointer;transition:all .3s}
+.file-btn:hover{border-color:rgba(191,168,255,.4)}
+.file-btn input{display:none}
+
+/* LOGIN MODES */
+.login-tabs{display:flex;background:rgba(255,255,255,.05);border:1px solid var(--gborder);border-radius:100px;padding:4px;margin-bottom:28px}
+.login-tab{flex:1;padding:9px;border-radius:100px;border:none;background:transparent;color:var(--muted);font-size:.78rem;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .3s}
+.login-tab.active{background:linear-gradient(135deg,rgba(191,168,255,.3),rgba(255,184,208,.18));color:var(--white)}
+.login-switch{font-size:.74rem;color:var(--muted);margin-top:16px}
+.login-switch a{color:var(--violet);text-decoration:none;cursor:pointer;font-weight:600}
+.login-pane{display:none}
+.login-pane.active{display:block}
+
+/* BALANCE */
+.balance-badge{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;color:var(--gold);background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.26);padding:6px 12px;border-radius:100px;white-space:nowrap}
+@media(max-width:700px){.balance-badge{display:none}}
+
+/* PAYMENT METHOD */
+.pay-methods{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.pay-method{flex:1;min-width:140px;padding:13px;border-radius:14px;border:1px solid var(--gborder);background:var(--gb);cursor:pointer;transition:all .3s;text-align:center}
+.pay-method.active{border-color:rgba(191,168,255,.5);background:rgba(191,168,255,.12)}
+.pay-method-lbl{font-size:.82rem;font-weight:600;color:var(--white)}
+.pay-method-sub{font-size:.68rem;color:var(--muted);margin-top:3px}
+
+/* CLIENTES TAB */
+.user-balance-cell{display:flex;align-items:center;gap:8px}
+
+/* BALANCE REQUEST MODAL */
+.balance-req-box{background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.22);border-radius:14px;padding:18px;margin-bottom:16px}
+.balance-req-step{font-size:.75rem;color:var(--muted);line-height:1.8;margin-bottom:10px}
+.balance-req-step b{color:var(--gold)}
+
+/* CLIENT PANEL (mis pedidos) */
+#clientPanel{background:var(--gb);border:1px solid var(--gborder);border-radius:22px;padding:24px;margin-bottom:20px}
+.client-orders-empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.client-order-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;margin-bottom:14px;transition:border-color .3s}
+.client-order-card:hover{border-color:rgba(191,168,255,.18)}
+.client-order-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.client-order-id{font-size:.68rem;color:var(--muted);font-family:monospace}
+.client-order-date{font-size:.68rem;color:var(--muted)}
+.client-order-items{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.client-order-item{font-size:.8rem;color:var(--white);display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.client-order-item:last-child{border-bottom:none}
+.client-order-total{font-size:.88rem;font-weight:600;color:var(--white);text-align:right;padding-top:8px;border-top:1px solid var(--gborder)}
+.client-order-method{font-size:.7rem;color:var(--muted);margin-top:4px;text-align:right}
+
+/* STREAMING PANEL (entregado) */
+.delivery-card{background:linear-gradient(135deg,rgba(191,168,255,.08),rgba(255,184,208,.05));border:1px solid rgba(191,168,255,.22);border-radius:14px;padding:18px;margin-top:12px}
+.delivery-label{font-size:.58rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--violet);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.delivery-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.82rem}
+.delivery-row:last-child{border-bottom:none}
+.delivery-key{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}
+.delivery-val{color:var(--white);font-weight:500;font-family:monospace;font-size:.85rem}
+.copy-btn{cursor:pointer;font-size:.7rem;color:var(--violet);border:1px solid rgba(191,168,255,.25);background:rgba(191,168,255,.07);border-radius:6px;padding:2px 8px;transition:all .2s;white-space:nowrap;margin-left:8px}
+.copy-btn:hover{background:rgba(191,168,255,.18)}
+
+/* OWNER: ADD BALANCE MODAL */
+.add-balance-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:350;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
+.add-balance-modal.open{opacity:1;pointer-events:all}
+.add-balance-box{width:100%;max-width:440px;background:rgba(11,10,20,.98);border:1px solid var(--gborder);border-radius:22px;padding:28px;animation:modalIn .3s cubic-bezier(.25,.8,.25,1)}
+.add-balance-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1.2rem;font-weight:600;color:var(--white);margin-bottom:20px}
+
+/* NOTIFICATION BADGE for owner */
+.notif-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--rose);border-radius:50%;font-size:.58rem;font-weight:700;color:#08080E;margin-left:6px;animation:pulse 2s infinite}
+
+/* PRODUCT TYPE FIELD */
+.product-type-fields{background:rgba(191,168,255,.04);border:1px solid rgba(191,168,255,.12);border-radius:12px;padding:14px;margin-top:10px}
+.product-type-lbl{font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--violet);margin-bottom:10px}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo" id="loginLogo" onclick="window._xoda._logoTap()" style="cursor:default;user-select:none">XO-DA</div>
+    <div class="login-tagline">Luxury Experience</div>
+
+    <!-- CLIENTE: LOGIN -->
+    <div class="login-pane active" id="paneClientLogin">
+      <label class="login-label" for="clEmail">Correo</label>
+      <input class="login-input" type="email" id="clEmail" placeholder="tu@correo.com" onkeydown="if(event.key==='Enter')window._xoda.clientLogin()"/>
+      <label class="login-label" for="clPass">Contraseña</label>
+      <input class="login-input" type="password" id="clPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')window._xoda.clientLogin()"/>
+      <button class="login-btn" onclick="window._xoda.clientLogin()">Entrar →</button>
+      <div class="login-switch">¿No tienes cuenta? <a onclick="window._xoda.showRegister()">Crear cuenta</a></div>
+    </div>
+
+    <!-- CLIENTE: REGISTRO -->
+    <div class="login-pane" id="paneClientRegister">
+      <label class="login-label" for="rgName">Nombre completo</label>
+      <input class="login-input" type="text" id="rgName" placeholder="Tu nombre"/>
+      <label class="login-label" for="rgEmail">Correo</label>
+      <input class="login-input" type="email" id="rgEmail" placeholder="tu@correo.com"/>
+      <label class="login-label" for="rgPass">Contraseña</label>
+      <input class="login-input" type="password" id="rgPass" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')window._xoda.register()"/>
+      <button class="login-btn" onclick="window._xoda.register()">Crear cuenta →</button>
+      <div class="login-switch">¿Ya tienes cuenta? <a onclick="window._xoda.showClientLogin()">Inicia sesión</a></div>
+    </div>
+
+    <!-- OWNER (oculto por default) -->
+    <div class="login-pane" id="paneOwner">
+      <div style="font-size:.65rem;color:var(--violet);letter-spacing:.15em;text-transform:uppercase;text-align:center;margin-bottom:20px;opacity:.7">◈ Acceso Owner</div>
+      <label class="login-label" for="loginPass">Contraseña de acceso</label>
+      <input class="login-input" type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')window._xoda.login()"/>
+      <button class="login-btn" onclick="window._xoda.login()">Entrar →</button>
+      <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:14px;cursor:pointer" onclick="window._xoda.setLoginRole('client')">← Volver</div>
+    </div>
+
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+
+<!-- APP -->
+<div id="appShell">
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="window._xoda.goTo('#hero')" tabindex="0" role="button">XO-DA</div>
+  <ul class="nav-links" aria-label="Navegación">
+    <li><a href="#tienda">Tienda</a></li>
+    <li><a href="#nosotros">Nosotros</a></li>
+    <li id="navClientPanelLi" style="display:none"><a href="#clientPanelSection">Mis Pedidos</a></li>
+    <li id="navPanelLi" style="display:none"><a href="#panel">Panel</a></li>
+  </ul>
+  <div class="nav-right">
+    <span id="roleLabel"></span>
+    <span class="balance-badge" id="balanceBadge" style="display:none">◈ <span id="balanceAmt">$0.00</span></span>
+    <button class="btn-glass" onclick="window._xoda.logout()" style="padding:10px 13px" aria-label="Salir" id="navLogoutBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+    <button class="nav-burger" onclick="window._xoda.openMobileNav()" id="hamburgerBtn" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div id="mobileNav" role="dialog" aria-modal="true">
+  <button class="mnav-close" onclick="window._xoda.closeMobileNav()">×</button>
+  <a class="mnav-link" href="#tienda" onclick="window._xoda.closeMobileNav()">Tienda</a>
+  <a class="mnav-link" href="#nosotros" onclick="window._xoda.closeMobileNav()">Nosotros</a>
+  <a class="mnav-link" href="#clientPanelSection" id="mobileNavClientPanel" style="display:none" onclick="window._xoda.closeMobileNav()">Mis Pedidos</a>
+  <a class="mnav-link" href="#panel" id="mobileNavPanel" style="display:none" onclick="window._xoda.closeMobileNav()">Panel</a>
+  <a class="mnav-link" style="color:var(--err);opacity:.8;font-size:1.4rem;margin-top:12px" onclick="window._xoda.closeMobileNav();window._xoda.logout()">Cerrar sesión</a>
+</div>
+
+<!-- HERO -->
+<div class="hero" id="hero">
+  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+  <div class="hero-eye"><span id="heroEyeText">Experiencia Premium</span></div>
+  <h1 id="heroH1">XO-DA</h1>
+  <p class="hero-sub" id="heroSubText">Donde el deseo se convierte en realidad</p>
+  <div class="hero-acts">
+    <button class="btn-glass btn-primary" onclick="window._xoda.goTo('#tienda')">Explorar colección →</button>
+    <button class="btn-glass" onclick="window._xoda.goTo('#nosotros')">Nuestra historia</button>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- NOSOTROS -->
+<section id="nosotros">
+  <div class="sec-label" id="aboutLabel">Por qué XO-DA</div>
+  <div class="sec-title" id="aboutTitle">Una experiencia<br>sin igual</div>
+  <div class="features-grid" id="featuresGrid"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TIENDA -->
+<section id="tienda">
+  <div class="sec-label" id="shopLabel">Catálogo</div>
+  <div class="sec-title" id="shopTitle">Nuestra colección</div>
+  <div class="tabs-row" id="filterTabs"></div>
+  <div class="products-grid" id="productsGrid">
+    <div class="empty-state"><div class="empty-sym">◌</div><p>Conectando…</p></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CLIENT PANEL (Mis Pedidos) -->
+<section id="clientPanelSection" style="display:none">
+  <div class="sec-label">Tu cuenta</div>
+  <div class="sec-title">Mis Pedidos</div>
+
+  <!-- Balance card -->
+  <div id="clientBalanceCard" class="glass-panel" style="margin-bottom:20px">
+    <div class="panel-hdr">
+      <div>
+        <div class="panel-title">Tu saldo</div>
+        <div class="panel-note">Úsalo para pagar sin transferencia</div>
+      </div>
+      <div id="clientBalanceDisplay" style="font-size:1.6rem;font-weight:700;color:var(--gold)">$0.00</div>
+    </div>
+    <!-- Shown when balance = 0 -->
+    <div id="clientZeroBalanceBlock" style="display:none">
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px;line-height:1.65">
+        Para recargar saldo, realiza una transferencia al owner y envía tu comprobante. El owner aplicará el monto a tu cuenta.
+      </div>
+      <button class="btn-glass btn-primary" onclick="window._xoda.openBalanceRequest()" style="font-size:.85rem;padding:11px 22px">◈ Solicitar recarga de saldo</button>
+    </div>
+    <!-- Shown when has balance -->
+    <div id="clientHasBalanceBlock" style="display:none">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.78rem;color:var(--muted)">Disponible para tus próximas compras</span>
+        <button class="btn-glass" onclick="window._xoda.openBalanceRequest()" style="font-size:.78rem;padding:8px 16px">+ Agregar más saldo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders list -->
+  <div id="clientPanel" class="glass-panel">
+    <div class="panel-hdr">
+      <div class="panel-title">Historial de pedidos <span class="live-dot" style="margin-left:6px"></span></div>
+      <span class="panel-note" id="clientOrdersCount"></span>
+    </div>
+    <div id="clientOrdersList">
+      <div class="client-orders-empty"><div class="empty-sym">◌</div><p>Aún no tienes pedidos</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PANEL OWNER -->
+<section id="panel" style="display:none">
+  <div class="sec-label">Gestión en tiempo real</div>
+  <div class="sec-title">Panel Owner</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Productos</div><div class="stat-value" id="stTotal">—</div><div class="stat-note">En catálogo</div></div>
+    <div class="stat-card"><div class="stat-label">En stock</div><div class="stat-value" id="stStock">—</div><div class="stat-note">Disponibles</div></div>
+    <div class="stat-card"><div class="stat-label">Precio prom.</div><div class="stat-value" id="stAvg">—</div><div class="stat-note">Catálogo</div></div>
+    <div class="stat-card"><div class="stat-label">Pedidos</div><div class="stat-value" id="stOrders">—</div><div class="stat-note">Total</div></div>
+    <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-value" id="stPending" style="color:var(--gold)">—</div><div class="stat-note" style="color:var(--gold)">Sin confirmar</div></div>
+  </div>
+
+  <div class="owner-tabs">
+    <button class="owner-tab active" onclick="window._xoda.ownerTab('productos',this)">Productos</button>
+    <button class="owner-tab" onclick="window._xoda.ownerTab('pedidos',this)">Pedidos</button>
+    <button class="owner-tab" onclick="window._xoda.ownerTab('clientes',this)">Clientes</button>
+    <button class="owner-tab" id="ownerSaldoTab" onclick="window._xoda.ownerTab('saldo',this)">Saldo <span id="saldoNotifBadge" style="display:none" class="notif-badge">!</span></button>
+    <button class="owner-tab" onclick="window._xoda.ownerTab('banco',this)">Transferencia</button>
+    <button class="owner-tab" onclick="window._xoda.ownerTab('categorias',this)">Categorías</button>
+    <button class="owner-tab" onclick="window._xoda.ownerTab('sitio',this)">Sitio</button>
+  </div>
+
+  <!-- TAB: PRODUCTOS -->
+  <div class="tab-pane active" id="tab-productos">
+    <div class="glass-panel" id="addProductForm">
+      <div class="panel-hdr">
+        <div class="panel-title" id="formTitle">Agregar producto</div>
+        <button class="btn-glass" onclick="window._xoda.clearForm()" style="font-size:.76rem">× Limpiar</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label for="pName">Nombre</label><input type="text" id="pName" placeholder="Nombre del producto"/></div>
+        <div class="form-group"><label for="pPrice">Precio (MXN $)</label><input type="number" id="pPrice" placeholder="99.00" min="0" step="0.01"/></div>
+        <div class="form-group"><label for="pCat">Categoría</label><select id="pCat"></select></div>
+        <div class="form-group"><label for="pStock">Stock</label><input type="number" id="pStock" placeholder="50" min="0"/></div>
+        <div class="form-group">
+          <label for="pBadge">Badge</label>
+          <select id="pBadge"><option value="">Sin badge</option><option value="new">● Nuevo</option><option value="hot">▲ Popular</option><option value="out">■ Agotado</option></select>
+        </div>
+        <div class="form-group full">
+          <label>Imagen del producto</label>
+          <div class="img-upload-row">
+            <div class="img-preview" id="pImgPreview">Sin imagen</div>
+            <label class="file-btn">📷 Subir imagen<input type="file" accept="image/*" id="pImageInput" onchange="window._xoda.onProductImage(event)"/></label>
+            <button class="btn-glass" onclick="window._xoda.clearProductImage()" style="font-size:.76rem">× Quitar</button>
+          </div>
+        </div>
+        <div class="form-group full"><label for="pDesc">Descripción</label><textarea id="pDesc" placeholder="Describe el producto…"></textarea></div>
+        <div class="form-group full">
+          <label for="pType">Tipo de entrega al cliente</label>
+          <select id="pType" onchange="window._xoda.onProdTypeChange()">
+            <option value="">General (sin datos especiales)</option>
+            <option value="streaming">Streaming / Cuenta (usuario + contraseña)</option>
+            <option value="codigo">Código / Clave</option>
+            <option value="link">Link / Descarga</option>
+            <option value="otro">Otro</option>
+          </select>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:5px">Determina qué datos aparecerán en el panel del cliente al marcar el pedido como entregado.</div>
+        </div>
+      </div>
+      <button class="btn-glass btn-primary" onclick="window._xoda.save()" style="font-size:.88rem;padding:12px 26px">✦ Guardar producto</button>
+    </div>
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Catálogo en vivo <span class="live-dot" style="margin-left:6px"></span></div>
+      </div>
+      <div class="tbl-scroll">
+        <table class="admin-tbl">
+          <thead><tr><th>Producto</th><th>Cat.</th><th>Precio</th><th>Stock</th><th>Badge</th><th>Acciones</th></tr></thead>
+          <tbody id="adminTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: PEDIDOS -->
+  <div class="tab-pane" id="tab-pedidos">
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Pedidos recibidos <span class="live-dot" style="margin-left:6px"></span></div>
+        <span class="panel-note" id="ordersCount"></span>
+      </div>
+      <div class="tbl-scroll">
+        <table class="admin-tbl">
+          <thead><tr><th>Ref.</th><th>Cliente</th><th>Contacto</th><th>Artículos</th><th>Total</th><th>Comprobante</th><th>Estado</th><th>Fecha</th></tr></thead>
+          <tbody id="ordersTbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px">Sin pedidos aún</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: CLIENTES -->
+  <div class="tab-pane" id="tab-clientes">
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Cuentas de clientes <span class="live-dot" style="margin-left:6px"></span></div>
+        <span class="panel-note" id="usersCount"></span>
+      </div>
+      <div class="tbl-scroll">
+        <table class="admin-tbl">
+          <thead><tr><th>ID</th><th>Cliente</th><th>Correo</th><th>Saldo (MXN)</th><th>Registrado</th><th>Acciones</th></tr></thead>
+          <tbody id="usersTbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">Sin clientes registrados aún</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Delivery data panel per client -->
+    <div class="glass-panel" id="deliveryDataPanel" style="display:none">
+      <div class="panel-hdr">
+        <div class="panel-title" id="deliveryDataTitle">Datos de entrega</div>
+        <button class="btn-glass" onclick="window._xoda.closeDeliveryPanel()" style="font-size:.76rem">× Cerrar</button>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:18px">Agrega los datos que verá el cliente en su panel de pedidos una vez marcado como entregado.</div>
+      <input type="hidden" id="deliveryOrderKey"/>
+      <div class="form-grid">
+        <div class="form-group"><label for="delPlatform">Plataforma / Servicio</label><input type="text" id="delPlatform" placeholder="Netflix, Spotify, etc."/></div>
+        <div class="form-group"><label for="delProductType">Tipo</label>
+          <select id="delProductType" onchange="window._xoda.toggleDeliveryType()">
+            <option value="streaming">Streaming / Cuenta</option>
+            <option value="codigo">Código / Clave</option>
+            <option value="link">Link / Descarga</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group" id="delUserGroup"><label for="delUser">Usuario / Email</label><input type="text" id="delUser" placeholder="usuario@email.com"/></div>
+        <div class="form-group" id="delPassGroup"><label for="delPass">Contraseña / PIN</label><input type="text" id="delPass" placeholder="contraseña123"/></div>
+        <div class="form-group" id="delCodeGroup" style="display:none"><label for="delCode">Código / Clave</label><input type="text" id="delCode" placeholder="XXXX-XXXX-XXXX"/></div>
+        <div class="form-group" id="delLinkGroup" style="display:none"><label for="delLink">Link</label><input type="text" id="delLink" placeholder="https://..."/></div>
+        <div class="form-group full"><label for="delNotes">Notas / Instrucciones</label><textarea id="delNotes" placeholder="Instrucciones adicionales para el cliente…"></textarea></div>
+      </div>
+      <button class="btn-glass btn-primary" onclick="window._xoda.saveDeliveryData()" style="font-size:.88rem;padding:12px 26px">✦ Guardar y enviar al cliente</button>
+    </div>
+  </div>
+
+  <!-- TAB: SALDO (owner agregar saldo sin prompt) -->
+  <div class="tab-pane" id="tab-saldo">
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Solicitudes de saldo <span class="live-dot" style="margin-left:6px"></span></div>
+        <span class="panel-note" id="balanceReqCount"></span>
+      </div>
+      <div id="balanceReqList">
+        <div style="text-align:center;padding:40px;color:var(--muted)">Sin solicitudes pendientes</div>
+      </div>
+    </div>
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Agregar / Restar saldo manualmente</div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="ownerBalanceSelect">Cliente</label>
+          <select id="ownerBalanceSelect"></select>
+        </div>
+        <div class="form-group">
+          <label for="ownerBalanceOp">Operación</label>
+          <select id="ownerBalanceOp">
+            <option value="add">Agregar saldo</option>
+            <option value="sub">Restar saldo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="ownerBalanceAmt">Monto (MXN)</label>
+          <input type="number" id="ownerBalanceAmt" placeholder="100.00" min="0" step="0.01"/>
+        </div>
+        <div class="form-group">
+          <label for="ownerBalanceNote">Nota interna (opcional)</label>
+          <input type="text" id="ownerBalanceNote" placeholder="Transferencia recibida…"/>
+        </div>
+      </div>
+      <button class="btn-glass btn-primary" onclick="window._xoda.applyOwnerBalance()" style="font-size:.88rem;padding:12px 26px">✦ Aplicar</button>
+    </div>
+  </div>
+
+  <!-- TAB: BANCO -->
+  <div class="tab-pane" id="tab-banco">
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Datos de transferencia</div>
+        <span class="panel-note">Visibles al cliente al pagar</span>
+      </div>
+      <div id="bankPreview" style="display:none" class="bank-preview"></div>
+      <div class="form-grid">
+        <div class="form-group"><label for="bBanco">Banco</label><input type="text" id="bBanco" placeholder="Banco Nacional"/></div>
+        <div class="form-group"><label for="bTitular">Titular</label><input type="text" id="bTitular" placeholder="XO-DA S.A."/></div>
+        <div class="form-group"><label for="bCuenta">Número de cuenta / IBAN</label><input type="text" id="bCuenta" placeholder="0000-0000-0000"/></div>
+        <div class="form-group"><label for="bTipo">Tipo de cuenta</label><input type="text" id="bTipo" placeholder="Cuenta Corriente"/></div>
+        <div class="form-group full"><label for="bNota">Instrucción al cliente</label><textarea id="bNota" placeholder="Incluir nombre y número de pedido como referencia…"></textarea></div>
+      </div>
+      <button class="btn-glass btn-primary" onclick="window._xoda.saveBank()" style="font-size:.88rem;padding:12px 26px">✦ Guardar datos</button>
+    </div>
+  </div>
+
+  <!-- TAB: CATEGORÍAS -->
+  <div class="tab-pane" id="tab-categorias">
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Categorías <span class="live-dot" style="margin-left:6px"></span></div>
+        <span class="panel-note">Aparecen como filtros en tienda y en el formulario de productos</span>
+      </div>
+      <div id="categoriesList" class="cat-chips" style="min-height:36px"></div>
+      <div class="cat-add-row">
+        <input type="text" id="newCatName" class="cat-add-input" placeholder="Nueva categoría (ej. Accesorios)"/>
+        <button class="btn-glass btn-primary" onclick="window._xoda.addCategory()" style="font-size:.82rem;padding:10px 18px">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: SITIO -->
+  <div class="tab-pane" id="tab-sitio">
+
+    <!-- Hero -->
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Sección Hero</div>
+        <button class="btn-glass btn-primary" onclick="window._xoda.saveHero()" style="font-size:.78rem;padding:9px 18px">✦ Guardar</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label for="sHeroEye">Texto sobre el título</label><input type="text" id="sHeroEye" placeholder="Experiencia Premium"/></div>
+        <div class="form-group"><label for="sHeroSub">Subtítulo</label><input type="text" id="sHeroSub" placeholder="Donde el deseo se convierte en realidad"/></div>
+      </div>
+    </div>
+
+    <!-- Nosotros -->
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Sección Nosotros</div>
+        <button class="btn-glass btn-primary" onclick="window._xoda.saveAbout()" style="font-size:.78rem;padding:9px 18px">✦ Guardar</button>
+      </div>
+      <div class="form-grid" style="margin-bottom:20px">
+        <div class="form-group"><label for="sAboutLabel">Etiqueta</label><input type="text" id="sAboutLabel" placeholder="Por qué XO-DA"/></div>
+        <div class="form-group"><label for="sAboutTitle">Título</label><input type="text" id="sAboutTitle" placeholder="Una experiencia sin igual"/></div>
+      </div>
+      <div class="site-section-label">Tarjetas de características</div>
+      <div id="featuresEditor"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-glass" onclick="window._xoda.addFeature()" style="font-size:.8rem">+ Tarjeta</button>
+        <button class="btn-glass btn-primary" onclick="window._xoda.saveFeatures()" style="font-size:.8rem">✦ Guardar tarjetas</button>
+      </div>
+    </div>
+
+    <!-- Tienda labels -->
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Sección Tienda</div>
+        <button class="btn-glass btn-primary" onclick="window._xoda.saveShop()" style="font-size:.78rem;padding:9px 18px">✦ Guardar</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label for="sShopLabel">Etiqueta</label><input type="text" id="sShopLabel" placeholder="Catálogo"/></div>
+        <div class="form-group"><label for="sShopTitle">Título</label><input type="text" id="sShopTitle" placeholder="Nuestra colección"/></div>
+      </div>
+    </div>
+
+    <!-- Tema de colores -->
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Tema de colores</div>
+        <button class="btn-glass btn-primary" onclick="window._xoda.saveTheme()" style="font-size:.78rem;padding:9px 18px">✦ Aplicar a todos</button>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:18px">Los cambios de color se previsualizan en tiempo real. Al guardar, se aplican a todos los usuarios.</p>
+      <div class="theme-preview">
+        <div style="text-align:center"><div class="theme-dot" id="pvViolet" style="background:var(--violet)"></div><div class="theme-dot-label">Acento</div></div>
+        <div style="text-align:center"><div class="theme-dot" id="pvRose" style="background:var(--rose)"></div><div class="theme-dot-label">Secundario</div></div>
+        <div style="text-align:center"><div class="theme-dot" id="pvGold" style="background:var(--gold)"></div><div class="theme-dot-label">Dorado</div></div>
+        <span style="font-size:.75rem;color:var(--muted);margin-left:8px">Vista previa en vivo</span>
+      </div>
+      <div class="theme-row">
+        <div class="color-group">
+          <label>Acento principal</label>
+          <div class="color-input-row">
+            <input type="color" id="tViolet" value="#BFA8FF" oninput="window._xoda.previewTheme()">
+            <input type="text" id="tVioletHex" class="color-hex" value="#BFA8FF" maxlength="7" oninput="document.getElementById('tViolet').value=this.value;window._xoda.previewTheme()"/>
+          </div>
+        </div>
+        <div class="color-group">
+          <label>Acento secundario</label>
+          <div class="color-input-row">
+            <input type="color" id="tRose" value="#FFB8D0" oninput="window._xoda.previewTheme()">
+            <input type="text" id="tRoseHex" class="color-hex" value="#FFB8D0" maxlength="7" oninput="document.getElementById('tRose').value=this.value;window._xoda.previewTheme()"/>
+          </div>
+        </div>
+        <div class="color-group">
+          <label>Dorado</label>
+          <div class="color-input-row">
+            <input type="color" id="tGold" value="#C8A96E" oninput="window._xoda.previewTheme()">
+            <input type="text" id="tGoldHex" class="color-hex" value="#C8A96E" maxlength="7" oninput="document.getElementById('tGold').value=this.value;window._xoda.previewTheme()"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="glass-panel">
+      <div class="panel-hdr">
+        <div class="panel-title">Pie de página</div>
+        <button class="btn-glass btn-primary" onclick="window._xoda.saveFooter()" style="font-size:.78rem;padding:9px 18px">✦ Guardar</button>
+      </div>
+      <div class="form-group"><label for="sFooterText">Texto legal</label><input type="text" id="sFooterText" placeholder="© 2025 XO-DA. Todos los derechos reservados."/></div>
+    </div>
+
+  </div><!-- /tab-sitio -->
+
+</section>
+
+<div class="divider"></div>
+<footer>
+  <div class="footer-logo">XO-DA</div>
+  <p id="footerText" style="font-size:.74rem;color:var(--muted)">© 2025 XO-DA. Todos los derechos reservados.</p>
+  <div class="live-row"><span class="live-dot"></span> Firebase Realtime</div>
+</footer>
+</div><!-- /appShell -->
+
+<!-- CART -->
+<div class="cart-overlay" id="cartOverlay" onclick="window._xoda.closeCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <div class="cart-hdr">
+    <div><div class="cart-title">Carrito</div><div class="cart-sub-txt" id="cartSubTxt">0 artículos</div></div>
+    <button class="btn-icon" onclick="window._xoda.closeCart()">×</button>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty"><div class="cart-empty-sym">◫</div><p>Tu carrito está vacío</p></div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total-row"><span class="cart-total-lbl">Total estimado</span><span id="cartTotal">$0.00</span></div>
+    <button class="btn-glass btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:.88rem" onclick="window._xoda.openCheckout()">Finalizar compra →</button>
+  </div>
+</div>
+
+<button id="cartFab" onclick="window._xoda.openCart()" aria-label="Carrito">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+  <span class="cart-badge-dot" id="cartBadgeFab" style="top:-3px;right:-3px"></span>
+</button>
+
+<!-- CHECKOUT -->
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal-box">
+    <div class="modal-hdr"><div class="modal-title">Confirmar pedido</div><button class="btn-icon" onclick="window._xoda.closeCheckout()">×</button></div>
+    <div class="modal-sec"><div class="modal-sec-lbl">Resumen del pedido</div><div id="checkoutSummary"></div></div>
+    <div class="modal-sec">
+      <div class="modal-sec-lbl">Método de pago</div>
+      <!-- Only saldo for clients -->
+      <div id="checkoutBalanceInfo" style="background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.2);border-radius:13px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:.82rem;font-weight:600;color:var(--white)">Pago con saldo</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">Saldo disponible: <span id="checkoutBalanceDisplay" style="color:var(--gold)">$0.00</span></div>
+        </div>
+        <div id="checkoutBalanceStatus" style="font-size:.75rem"></div>
+      </div>
+    </div>
+    <div class="modal-sec">
+      <div class="modal-sec-lbl">Tus datos</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="form-group"><label for="coName">Nombre completo</label><input type="text" id="coName" placeholder="Tu nombre completo"/></div>
+        <div class="form-group"><label for="coContact">WhatsApp / Teléfono</label><input type="text" id="coContact" placeholder="+1 000 000 0000"/></div>
+      </div>
+    </div>
+    <button class="btn-glass btn-primary" style="width:100%;justify-content:center;padding:15px;font-size:.9rem" onclick="window._xoda.submitOrder()">Confirmar pedido →</button>
+    <p style="font-size:.71rem;color:var(--muted);text-align:center;margin-top:11px;line-height:1.65">Al confirmar se descuenta el monto de tu saldo disponible.</p>
+  </div>
+</div>
+
+<!-- BALANCE REQUEST MODAL (client) -->
+<div class="modal-overlay" id="balanceReqModal">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Solicitar recarga de saldo</div>
+      <button class="btn-icon" onclick="window._xoda.closeBalanceRequest()">×</button>
+    </div>
+    <div class="balance-req-box">
+      <div class="modal-sec-lbl" style="margin-bottom:8px">Instrucciones</div>
+      <div class="balance-req-step">
+        <b>1.</b> Realiza una transferencia bancaria por el monto que deseas recargar usando los datos de abajo.<br>
+        <b>2.</b> Llena el formulario indicando el monto y tu comprobante.<br>
+        <b>3.</b> El owner recibirá tu solicitud y aplicará el saldo a tu cuenta.
+      </div>
+      <div id="balanceReqBankData" style="margin-top:10px"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+      <div class="form-group">
+        <label for="reqAmount">Monto a recargar (MXN)</label>
+        <input type="number" id="reqAmount" placeholder="500.00" min="1" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label for="reqRef">Referencia / Comprobante</label>
+        <input type="text" id="reqRef" placeholder="Número de operación o descripción"/>
+      </div>
+    </div>
+    <button class="btn-glass btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:.9rem" onclick="window._xoda.submitBalanceRequest()">Enviar solicitud →</button>
+  </div>
+</div>
+
+<div id="toastWrap"></div>
+
+<!-- FIREBASE + LÓGICA -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, remove, update, onValue, set, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyApC2BZjhv13Xm4p33cs9f27103dm6uzHs",
+  authDomain:"xo-da-bd4a4.firebaseapp.com",
+  databaseURL:"https://xo-da-bd4a4-default-rtdb.firebaseio.com",
+  projectId:"xo-da-bd4a4",
+  storageBucket:"xo-da-bd4a4.firebasestorage.app",
+  messagingSenderId:"924209315635",
+  appId:"1:924209315635:web:cf95966bd19499acfa8846"
+});
+const db = getDatabase(app);
+
+const CREDS = { owner: atob('eG9kYTIwMjU=') };
+
+// Defaults (semilla de config si Firebase está vacío)
+const DEFAULT_CATS = []; // Sin categorías predeterminadas — el owner crea las suyas
+const DEFAULT_FEATURES = [
+  {sym:'◈',title:'Selección curada',desc:'Cada producto elegido con precisión absoluta. Solo lo mejor llega a XO-DA.'},
+  {sym:'◇',title:'Envío express',desc:'Recibe tu pedido en tiempo récord, empacado con el cuidado que merece.'},
+  {sym:'◉',title:'Garantía total',desc:'Si no estás satisfecho, devuelves sin preguntas. Tu confianza primero.'},
+  {sym:'✦',title:'Ediciones exclusivas',desc:'Piezas únicas y colaboraciones especiales solo en XO-DA.'},
+];
+const DEFAULT_SITE = {
+  heroEye:'Experiencia Premium',
+  heroSub:'Donde el deseo se convierte en realidad',
+  aboutLabel:'Por qué XO-DA',
+  aboutTitle:'Una experiencia sin igual',
+  shopLabel:'Catálogo',
+  shopTitle:'Nuestra colección',
+  footerText:'© 2025 XO-DA. Todos los derechos reservados.',
+};
+const DEFAULT_THEME = {violet:'#BFA8FF',rose:'#FFB8D0',gold:'#C8A96E'};
+
+let role=null, products={}, orders={}, bankConfig={}, categories={}, siteConfig={}, themeConfig={}, users={};
+let currentUser=null, pImageData=null, loginRoleMode='client';
+let cart=[], activeFilter='all', editKey=null, localFeatures=[...DEFAULT_FEATURES];
+
+// ── MONEDA ──
+// Todas las cantidades se guardan en MXN. Tipo de cambio aprox solo para info.
+const CURRENCY_SYMBOL = '$';
+const CURRENCY_LABEL  = 'MXN';
+function fmt(n){ return CURRENCY_SYMBOL + parseFloat(n).toFixed(2); }
+
+// ── ID DE USUARIO ──
+// Formato: 10001, 10002…  Se guarda en config/lastUserId
+async function getNextUserId(){
+  try{
+    const snap = await get(ref(db,'config/lastUserId'));
+    const last = snap.exists() ? parseInt(snap.val()) : 10000;
+    const next = last + 1;
+    await set(ref(db,'config/lastUserId'), next);
+    return next;
+  }catch(e){ return Date.now(); }
+}
+
+// ── CANVAS ──
+const cv=document.getElementById('canvas'), cx=cv.getContext('2d'); let pts=[];
+function rsz(){cv.width=innerWidth;cv.height=innerHeight;}
+rsz(); addEventListener('resize',rsz);
+const mkPt=()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*.5+.1,vx:(Math.random()-.5)*.18,vy:-Math.random()*.2-.04,life:Math.random()*.7+.3,decay:Math.random()*.0015+.0004,tw:Math.random()*Math.PI*2,tws:Math.random()*.03+.008,col:['rgba(191,168,255,','rgba(255,184,208,','rgba(255,255,255,','rgba(200,169,110,'][Math.floor(Math.random()*4)]});
+(function loop(){cx.clearRect(0,0,cv.width,cv.height);while(pts.length<200)pts.push(mkPt());pts=pts.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;p.tw+=p.tws;if(p.y<-2){p.y=cv.height+2;p.life=Math.random()*.7+.3;}const a=p.life*(0.5+0.5*Math.sin(p.tw))*.6;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fillStyle=p.col+a+')';cx.fill();return p.life>0;});requestAnimationFrame(loop);})();
+
+function updateBalanceUI(){
+  if(!currentUser) return;
+  const bal=currentUser.balance||0;
+  $('balanceAmt').textContent=fmt(bal)+' MXN';
+  // Client panel balance
+  const cbd=$('clientBalanceDisplay');if(cbd) cbd.textContent=fmt(bal)+' MXN';
+  const czb=$('clientZeroBalanceBlock'),chb=$('clientHasBalanceBlock');
+  if(czb) czb.style.display=bal<=0?'block':'none';
+  if(chb) chb.style.display=bal>0?'block':'none';
+  // Checkout balance display
+  const cd=$('checkoutBalanceDisplay');if(cd) cd.textContent=fmt(bal)+' MXN';
+}
+
+// ── UTILS ──
+const $=id=>document.getElementById(id);
+function toast(msg,type=''){const c=$('toastWrap'),t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;c.appendChild(t);setTimeout(()=>t.style.opacity='0',2700);setTimeout(()=>t.remove(),3200);}
+function goTo(sel){document.querySelector(sel)?.scrollIntoView({behavior:'smooth',block:'start'});}
+function setText(id,text){const el=$(id);if(el)el.textContent=text;}
+// Gradient per category
+function catBg(name){const n=(name||'').toLowerCase();if(n.includes('life'))return'linear-gradient(135deg,#1a1028,#0f0a18)';if(n.includes('fash'))return'linear-gradient(135deg,#1a0d14,#120810)';if(n.includes('beau'))return'linear-gradient(135deg,#1a1508,#11100a)';if(n.includes('tech'))return'linear-gradient(135deg,#0d1020,#0a0c18)';return'linear-gradient(135deg,#161616,#0c0c0c)';}
+const BADGE_LABELS={new:'● Nuevo',hot:'▲ Popular',out:'■ Agotado','':"—"};
+const BADGE_CLASSES={new:'badge-new',hot:'badge-hot',out:'badge-out'};
+
+// ── HASHING ──
+async function hashPass(pw){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── LOGIN MODE TABS ──
+let _logoTapCount=0, _logoTapTimer=null;
+function _logoTap(){
+  _logoTapCount++;
+  clearTimeout(_logoTapTimer);
+  _logoTapTimer=setTimeout(()=>{ _logoTapCount=0; }, 1800);
+  if(_logoTapCount>=5){ _logoTapCount=0; setLoginRole('owner'); }
+}
+function setLoginRole(mode){
+  loginRoleMode=mode;
+  $('paneOwner').classList.toggle('active',mode==='owner');
+  if(mode==='owner'){
+    $('paneClientLogin').classList.remove('active');
+    $('paneClientRegister').classList.remove('active');
+  } else {
+    showClientLogin();
+  }
+  clearLoginErr();
+}
+// Activar modo owner si URL tiene ?owner=1 (solo para dev)
+if(new URLSearchParams(location.search).get('owner')==='1') setTimeout(()=>setLoginRole('owner'),100);
+function showRegister(){
+  $('paneClientLogin').classList.remove('active');
+  $('paneClientRegister').classList.add('active');
+  clearLoginErr();
+}
+function showClientLogin(){
+  $('paneClientRegister').classList.remove('active');
+  $('paneClientLogin').classList.add('active');
+  clearLoginErr();
+}
+function clearLoginErr(){const e=$('loginErr');e.textContent='';e.style.opacity='0';}
+function loginErr(msg){const e=$('loginErr');e.textContent=msg;e.style.opacity='1';setTimeout(()=>e.style.opacity='0',2800);}
+
+// ── LOGIN: OWNER ──
+function login(){
+  const pass=$('loginPass').value.trim();
+  if(pass!==CREDS.owner){loginErr('Contraseña incorrecta');$('loginPass').value='';return;}
+  role='owner';currentUser=null;
+  enterApp();
+}
+
+// ── LOGIN: CLIENTE ──
+async function clientLogin(){
+  const email=$('clEmail').value.trim().toLowerCase(),pass=$('clPass').value;
+  if(!email||!pass){loginErr('Ingresa correo y contraseña');return;}
+  try{
+    const snap=await get(ref(db,'users'));
+    const all=snap.val()||{};
+    const hash=await hashPass(pass);
+    const found=Object.entries(all).find(([,u])=>u.email===email && u.passwordHash===hash);
+    if(!found){loginErr('Correo o contraseña incorrectos');return;}
+    const [key,u]=found;
+    role='client';currentUser={key,name:u.name,email:u.email,balance:u.balance||0,userId:u.userId||null};
+    enterApp();
+  }catch(e){loginErr('Error al iniciar sesión');}
+}
+
+// ── REGISTRO CLIENTE ──
+async function register(){
+  const name=$('rgName').value.trim(),email=$('rgEmail').value.trim().toLowerCase(),pass=$('rgPass').value;
+  if(!name||!email||!pass){loginErr('Completa todos los campos');return;}
+  if(pass.length<6){loginErr('La contraseña debe tener mínimo 6 caracteres');return;}
+  try{
+    const snap=await get(ref(db,'users'));
+    const all=snap.val()||{};
+    if(Object.values(all).some(u=>u.email===email)){loginErr('Ese correo ya tiene una cuenta');return;}
+    const passwordHash=await hashPass(pass);
+    const userId=await getNextUserId();
+    const newRef=await push(ref(db,'users'),{name,email,passwordHash,balance:0,userId,createdAt:Date.now()});
+    role='client';currentUser={key:newRef.key,name,email,balance:0,userId};
+    toast(`Bienvenido, ${name}`,'ok');
+    enterApp();
+  }catch(e){loginErr('Error al crear la cuenta');}
+}
+
+function enterApp(){
+  const ls=$('loginScreen');ls.style.opacity='0';
+  setTimeout(()=>{ls.style.display='none';const as=$('appShell');as.style.display='block';setTimeout(()=>as.style.opacity='1',30);initApp();},450);
+}
+function logout(){
+  role=null;currentUser=null;cart=[];
+  const as=$('appShell');as.style.opacity='0';
+  setTimeout(()=>{
+    as.style.display='none';
+    const ls=$('loginScreen');ls.style.display='flex';ls.style.opacity='0';
+    setTimeout(()=>ls.style.opacity='1',30);
+    $('loginPass').value='';$('clEmail').value='';$('clPass').value='';
+    $('rgName').value='';$('rgEmail').value='';$('rgPass').value='';
+    setLoginRole('client');
+  },420);
+}
+
+// ── INIT ──
+async function initApp(){
+  const isOwner=role==='owner';
+  const userIdLabel=currentUser?.userId?` #${currentUser.userId}`:'';
+  $('roleLabel').textContent=isOwner?'◈ Owner':`◉ ${currentUser?currentUser.name:'Cliente'}${userIdLabel}`;
+  $('panel').style.display=isOwner?'':'none';
+  $('navPanelLi').style.display=isOwner?'':'none';
+  $('mobileNavPanel').style.display=isOwner?'':'none';
+  $('clientPanelSection').style.display=!isOwner&&currentUser?'':'none';
+  $('navClientPanelLi').style.display=!isOwner&&currentUser?'':'none';
+  $('mobileNavClientPanel').style.display=!isOwner&&currentUser?'':'none';
+  if(!isOwner && currentUser){
+    $('coName').value=currentUser.name;
+    $('balanceBadge').style.display='inline-flex';
+  } else {
+    $('balanceBadge').style.display='none';
+  }
+
+  // Sembrar config vacía si no existe
+  if(isOwner) await seedConfigIfNeeded();
+
+  // Tiempo real: categorías (todos)
+  onValue(ref(db,'config/categories'), snap=>{
+    categories=snap.val()||{};
+    renderFilterTabs();
+    renderCategoryOptions();
+    if(isOwner) renderCategoriesList();
+  });
+
+  // Tiempo real: contenido del sitio (todos)
+  onValue(ref(db,'config/site'), snap=>{
+    siteConfig=snap.val()||{};
+    applySiteContent(siteConfig);
+    if(isOwner) populateSiteEditor(siteConfig);
+  });
+
+  // Tiempo real: tema (todos)
+  onValue(ref(db,'config/theme'), snap=>{
+    themeConfig=snap.val()||{};
+    applyTheme(themeConfig);
+    if(isOwner) loadThemeEditor(themeConfig);
+  });
+
+  // Tiempo real: productos (todos)
+  onValue(ref(db,'products'), snap=>{
+    products=snap.val()||{};
+    renderProducts();
+    if(isOwner){renderAdminTable();updateStats();}
+  });
+
+  // Tiempo real: usuarios/clientes
+  if(isOwner){
+    onValue(ref(db,'users'), snap=>{users=snap.val()||{};renderUsers();});
+  } else if(currentUser){
+    onValue(ref(db,'users/'+currentUser.key), snap=>{
+      const u=snap.val();if(!u) return;
+      currentUser.balance=u.balance||0;
+      updateBalanceUI();
+    });
+  }
+
+  // Tiempo real: pedidos
+  if(isOwner){
+    onValue(ref(db,'orders'), snap=>{orders=snap.val()||{};renderOrders();updateStats();});
+    // Solicitudes de saldo
+    onValue(ref(db,'balanceRequests'), snap=>{renderBalanceRequests(snap.val()||{});});
+  } else if(currentUser){
+    // Cliente: sus pedidos en tiempo real
+    onValue(ref(db,'orders'), snap=>{
+      const all=snap.val()||{};
+      const mine=Object.fromEntries(Object.entries(all).filter(([,o])=>o.userKey===currentUser.key));
+      renderClientOrders(mine);
+    });
+  }
+
+  // Config bancaria (todos, necesaria para checkout)
+  onValue(ref(db,'config/bank'), snap=>{
+    bankConfig=snap.val()||{};
+    if(isOwner) loadBankForm();
+  });
+
+  updateCart();
+}
+
+async function seedConfigIfNeeded(){
+  try{
+    // Categorías — no se siembran por defecto, el owner crea las suyas
+    // Contenido
+    const ss=await get(ref(db,'config/site'));
+    if(!ss.exists()){
+      const featObj={};DEFAULT_FEATURES.forEach((f,i)=>featObj[i]=f);
+      await set(ref(db,'config/site'),{...DEFAULT_SITE,features:featObj});
+    }
+    // Tema
+    const ts=await get(ref(db,'config/theme'));
+    if(!ts.exists()) await set(ref(db,'config/theme'),DEFAULT_THEME);
+  }catch(e){console.warn('Seed error:',e);}
+}
+
+// ── MOBILE NAV ──
+function openMobileNav(){$('mobileNav').classList.add('open');document.body.style.overflow='hidden';}
+function closeMobileNav(){$('mobileNav').classList.remove('open');document.body.style.overflow='';}
+
+// ── OWNER TABS ──
+function ownerTab(tab,btn){
+  document.querySelectorAll('.owner-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');$('tab-'+tab).classList.add('active');
+}
+
+// ── CATEGORÍAS ──
+function renderFilterTabs(){
+  const entries=Object.entries(categories);
+  const all=`<button class="filter-tab ${activeFilter==='all'?'active':''}" onclick="window._xoda.filterBy('all',this)">Todo</button>`;
+  const cats=entries.map(([id,name])=>`<button class="filter-tab ${activeFilter===name?'active':''}" onclick="window._xoda.filterBy(${JSON.stringify(name)},this)">${name}</button>`).join('');
+  $('filterTabs').innerHTML=all+cats;
+}
+function renderCategoryOptions(){
+  const sel=$('pCat'); if(!sel) return;
+  const entries=Object.entries(categories);
+  if(!entries.length){sel.innerHTML='<option value="">Sin categorías</option>';return;}
+  sel.innerHTML=entries.map(([,name])=>`<option value="${name}">${name}</option>`).join('');
+}
+function renderCategoriesList(){
+  const entries=Object.entries(categories);
+  $('categoriesList').innerHTML=!entries.length
+    ?`<p style="color:var(--muted);font-size:.82rem">Sin categorías. Agrega la primera.</p>`
+    :entries.map(([id,name])=>`<div class="cat-chip"><span>${name}</span><button class="cat-chip-del" onclick="window._xoda.deleteCategory('${id}')" title="Eliminar ${name}">×</button></div>`).join('');
+}
+async function addCategory(){
+  const name=$('newCatName').value.trim();
+  if(!name){toast('Ingresa un nombre','err');return;}
+  // Evitar duplicados
+  if(Object.values(categories).some(n=>n.toLowerCase()===name.toLowerCase())){toast('Ya existe esta categoría','err');return;}
+  try{await push(ref(db,'config/categories'),name);$('newCatName').value='';toast(`Categoría "${name}" agregada`,'ok');}
+  catch(e){toast('Error al guardar','err');}
+}
+async function deleteCategory(id){
+  const name=categories[id];
+  if(!confirm(`¿Eliminar categoría "${name}"?`)) return;
+  try{await remove(ref(db,'config/categories/'+id));toast('Categoría eliminada');}
+  catch(e){toast('Error al eliminar','err');}
+}
+
+// ── SITE CONTENT ──
+function applySiteContent(s){
+  setText('heroEyeText', s.heroEye||DEFAULT_SITE.heroEye);
+  setText('heroSubText', s.heroSub||DEFAULT_SITE.heroSub);
+  setText('aboutLabel',  s.aboutLabel||DEFAULT_SITE.aboutLabel);
+  setText('aboutTitle',  s.aboutTitle||DEFAULT_SITE.aboutTitle);
+  setText('shopLabel',   s.shopLabel||DEFAULT_SITE.shopLabel);
+  setText('shopTitle',   s.shopTitle||DEFAULT_SITE.shopTitle);
+  setText('footerText',  s.footerText||DEFAULT_SITE.footerText);
+  const feats=s.features?Object.values(s.features):DEFAULT_FEATURES;
+  renderFeaturesGrid(feats);
+}
+function renderFeaturesGrid(feats){
+  $('featuresGrid').innerHTML=(feats||DEFAULT_FEATURES).map(f=>`
+    <div class="feature-card">
+      <div class="feature-sym">${f.sym||'◈'}</div>
+      <div class="feature-title">${f.title||''}</div>
+      <div class="feature-desc">${f.desc||''}</div>
+    </div>`).join('');
+}
+function populateSiteEditor(s){
+  $('sHeroEye').value   = s.heroEye    ||DEFAULT_SITE.heroEye;
+  $('sHeroSub').value   = s.heroSub    ||DEFAULT_SITE.heroSub;
+  $('sAboutLabel').value= s.aboutLabel ||DEFAULT_SITE.aboutLabel;
+  $('sAboutTitle').value= s.aboutTitle ||DEFAULT_SITE.aboutTitle;
+  $('sShopLabel').value = s.shopLabel  ||DEFAULT_SITE.shopLabel;
+  $('sShopTitle').value = s.shopTitle  ||DEFAULT_SITE.shopTitle;
+  $('sFooterText').value= s.footerText ||DEFAULT_SITE.footerText;
+  localFeatures = s.features ? Object.values(s.features) : [...DEFAULT_FEATURES];
+  renderFeaturesEditor();
+}
+
+// Features editor
+function renderFeaturesEditor(){
+  $('featuresEditor').innerHTML=localFeatures.map((f,i)=>`
+    <div class="feature-edit-row" id="frow-${i}">
+      <div class="feature-edit-sym">
+        <label>Símbolo</label>
+        <input class="fsym" value="${f.sym||''}" maxlength="4" style="text-align:center;font-size:1.1rem">
+      </div>
+      <div class="feature-edit-main">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Título</label>
+          <input class="ftitle" value="${(f.title||'').replace(/"/g,'&quot;')}">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Descripción</label>
+          <textarea class="fdesc" style="min-height:60px">${f.desc||''}</textarea>
+        </div>
+      </div>
+      <button class="btn-icon danger" onclick="window._xoda.removeFeature(${i})" title="Eliminar tarjeta" style="margin-top:18px;flex-shrink:0">×</button>
+    </div>`).join('');
+}
+function addFeature(){localFeatures.push({sym:'◈',title:'Nueva tarjeta',desc:''});renderFeaturesEditor();}
+function removeFeature(i){localFeatures.splice(i,1);renderFeaturesEditor();}
+
+async function saveSection(key, data){
+  try{await update(ref(db,'config/site'),data);toast(`${key} guardado`,'ok');}
+  catch(e){toast('Error al guardar','err');}
+}
+function saveHero(){saveSection('Hero',{heroEye:$('sHeroEye').value.trim(),heroSub:$('sHeroSub').value.trim()});}
+function saveAbout(){saveSection('Nosotros',{aboutLabel:$('sAboutLabel').value.trim(),aboutTitle:$('sAboutTitle').value.trim()});}
+function saveShop(){saveSection('Tienda',{shopLabel:$('sShopLabel').value.trim(),shopTitle:$('sShopTitle').value.trim()});}
+function saveFooter(){saveSection('Pie de página',{footerText:$('sFooterText').value.trim()});}
+
+async function saveFeatures(){
+  // Leer desde DOM
+  document.querySelectorAll('.feature-edit-row').forEach((row,i)=>{
+    if(localFeatures[i]){
+      localFeatures[i].sym  = row.querySelector('.fsym')?.value||'';
+      localFeatures[i].title= row.querySelector('.ftitle')?.value||'';
+      localFeatures[i].desc = row.querySelector('.fdesc')?.value||'';
+    }
+  });
+  const featObj={};localFeatures.forEach((f,i)=>featObj[i]=f);
+  try{await set(ref(db,'config/site/features'),featObj);toast('Tarjetas guardadas','ok');}
+  catch(e){toast('Error al guardar tarjetas','err');}
+}
+
+// ── TEMA ──
+function applyTheme(t){
+  if(!t) return;
+  const r=document.documentElement;
+  if(t.violet) r.style.setProperty('--violet',t.violet);
+  if(t.rose)   r.style.setProperty('--rose',t.rose);
+  if(t.gold)   r.style.setProperty('--gold',t.gold);
+  // Actualizar dots de preview
+  const pv=$('pvViolet'),pr=$('pvRose'),pg=$('pvGold');
+  if(pv) pv.style.background=t.violet||'var(--violet)';
+  if(pr) pr.style.background=t.rose||'var(--rose)';
+  if(pg) pg.style.background=t.gold||'var(--gold)';
+}
+function loadThemeEditor(t){
+  if(!t) return;
+  if(t.violet){$('tViolet').value=t.violet;$('tVioletHex').value=t.violet;}
+  if(t.rose)  {$('tRose').value=t.rose;    $('tRoseHex').value=t.rose;}
+  if(t.gold)  {$('tGold').value=t.gold;    $('tGoldHex').value=t.gold;}
+}
+function previewTheme(){
+  const v=$('tViolet').value, rs=$('tRose').value, g=$('tGold').value;
+  $('tVioletHex').value=v; $('tRoseHex').value=rs; $('tGoldHex').value=g;
+  applyTheme({violet:v,rose:rs,gold:g});
+}
+async function saveTheme(){
+  const data={violet:$('tViolet').value,rose:$('tRose').value,gold:$('tGold').value};
+  try{await set(ref(db,'config/theme'),data);themeConfig=data;toast('Tema guardado — visible para todos','ok');}
+  catch(e){toast('Error al guardar tema','err');}
+}
+
+// ── RENDER PRODUCTOS ──
+function renderProducts(){
+  const grid=$('productsGrid');
+  const entries=Object.entries(products);
+  const show=activeFilter==='all'?entries:entries.filter(([,p])=>p.category===activeFilter);
+  if(!show.length){
+    grid.innerHTML=`<div class="empty-state"><div class="empty-sym">◌</div><p>${entries.length?'Sin productos en esta categoría':'El catálogo está vacío'}</p></div>`;
+    return;
+  }
+  grid.innerHTML=show.map(([k,p],i)=>{
+    const ok=p.stock>0,low=ok&&p.stock<=5;
+    const sc=!ok?'stock-out':low?'stock-low':'stock-ok';
+    const st=!ok?'Agotado':low?`Solo ${p.stock} restantes`:`${p.stock} disponibles`;
+    const init=(p.name||'X').charAt(0).toUpperCase();
+    const bg=catBg(p.category);
+    const bc=BADGE_CLASSES[p.badge]||'', bl=BADGE_LABELS[p.badge||'']||'';
+    return `<div class="product-card" style="animation:fadeUp .45s ease ${i*.06}s both">
+      <div class="product-img" style="background:${bg}">
+        ${p.image?`<img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async"/>`:`<span class="product-initial">${init}</span>`}
+        ${bc?`<div class="product-badge ${bc}">${bl}</div>`:''}
+      </div>
+      <div class="product-body">
+        <div class="product-cat">${p.category||''}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${p.desc||''}</div>
+        <div class="product-footer">
+          <div>
+            <div class="product-price">${fmt(p.price)}<span class="price-usd">MXN</span></div>
+            <div class="product-stock ${sc}">${st}</div>
+          </div>
+          <button class="btn-add-cart" onclick="window._xoda.addCart('${k}')" ${!ok?'disabled':''} aria-label="Agregar ${p.name}">+</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function filterBy(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderProducts();
+}
+
+// ── CARRITO ──
+function addCart(k){
+  const p=products[k];if(!p||p.stock<=0) return;
+  const ex=cart.find(c=>c.k===k);
+  if(ex){if(ex.qty>=p.stock){toast('Stock máximo alcanzado');return;}ex.qty++;}
+  else cart.push({k,name:p.name,price:p.price,category:p.category,image:p.image,qty:1});
+  updateCart();toast(`${p.name} — agregado`,'ok');
+}
+function removeCart(k){cart=cart.filter(c=>c.k!==k);updateCart();}
+function qtyCart(k,delta){const item=cart.find(c=>c.k===k);if(!item) return;item.qty+=delta;if(item.qty<=0) removeCart(k); else updateCart();}
+function updateCart(){
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0), count=cart.reduce((s,c)=>s+c.qty,0);
+  $('cartTotal').textContent=fmt(total)+' MXN';
+  $('cartSubTxt').textContent=`${count} artículo${count!==1?'s':''}`;
+  [$('cartBadgeNav'),$('cartBadgeFab')].forEach(b=>{if(!b)return;b.textContent=count;b.style.display=count>0?'flex':'none';});
+  $('cartItems').innerHTML=!cart.length
+    ?`<div class="cart-empty"><div class="cart-empty-sym">◫</div><p>Tu carrito está vacío</p></div>`
+    :cart.map(c=>`<div class="cart-item">
+        <div class="cart-thumb" style="background:${catBg(c.category)}">${c.image?`<img src="${c.image}" alt="${c.name}"/>`:c.name.charAt(0)}</div>
+        <div class="cart-info">
+          <div class="cart-iname">${c.name}</div>
+          <div class="cart-iprice">${fmt(c.price)} × ${c.qty} = ${fmt(c.price*c.qty)} MXN</div>
+          <div class="cart-qty">
+            <button class="cqty-btn" onclick="window._xoda.qtyCart('${c.k}',-1)">−</button>
+            <span style="font-size:.8rem;min-width:18px;text-align:center">${c.qty}</span>
+            <button class="cqty-btn" onclick="window._xoda.qtyCart('${c.k}',1)">+</button>
+          </div>
+        </div>
+        <button class="cart-rm" onclick="window._xoda.removeCart('${c.k}')">×</button>
+      </div>`).join('');
+}
+function openCart(){$('cartSidebar').classList.add('open');$('cartOverlay').classList.add('open');document.body.style.overflow='hidden';}
+function closeCart(){$('cartSidebar').classList.remove('open');$('cartOverlay').classList.remove('open');document.body.style.overflow='';}
+
+// ── CHECKOUT ──
+function openCheckout(){
+  if(!cart.length){toast('El carrito está vacío');return;}
+  closeCart();
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  $('checkoutSummary').innerHTML=cart.map(c=>`<div class="order-line"><span>${c.name} × ${c.qty}</span><span>${fmt(c.price*c.qty)} MXN</span></div>`).join('')
+    +`<div class="order-total"><span class="order-total-lbl">Total</span><span class="order-total-val">${fmt(total)} MXN</span></div>`;
+  updateBalanceUI();
+  openCheckoutBalanceCheck(total);
+  $('checkoutModal').classList.add('open');document.body.style.overflow='hidden';
+}
+function closeCheckout(){$('checkoutModal').classList.remove('open');document.body.style.overflow='';}
+$('checkoutModal').addEventListener('click',e=>{if(e.target.id==='checkoutModal') closeCheckout();});
+function renderTransferBox(){
+  // Used in balance request modal
+  const {bank,holder,account,type,notes}=bankConfig;
+  const el=$('balanceReqBankData');if(!el) return;
+  if(!bank&&!account){el.innerHTML=`<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:10px 0">El owner aún no ha configurado los datos bancarios.</div>`;return;}
+  el.innerHTML=`<div class="transfer-box">`+[
+    bank    &&`<div class="tr-row"><span class="tr-key">Banco</span><span class="tr-val">${bank}</span></div>`,
+    holder  &&`<div class="tr-row"><span class="tr-key">Titular</span><span class="tr-val">${holder}</span></div>`,
+    account &&`<div class="tr-row"><span class="tr-key">Cuenta</span><span class="tr-val">${account}</span></div>`,
+    type    &&`<div class="tr-row"><span class="tr-key">Tipo</span><span class="tr-val">${type}</span></div>`,
+    notes   &&`<div class="tr-note">◈ ${notes}</div>`,
+  ].filter(Boolean).join('')+`</div>`;
+}
+function openCheckoutBalanceCheck(total){
+  const bal=currentUser?.balance||0;
+  const st=$('checkoutBalanceStatus');
+  if(!st) return;
+  if(bal>=total){
+    st.innerHTML=`<span style="color:var(--ok)">✓ Saldo suficiente</span>`;
+  } else {
+    const falta=total-bal;
+    st.innerHTML=`<span style="color:var(--err)">Faltan ${fmt(falta)} MXN</span>`;
+  }
+}
+async function submitOrder(){
+  const name=$('coName').value.trim(),contact=$('coContact').value.trim();
+  if(!name||!contact){toast('Ingresa nombre y teléfono de contacto','err');return;}
+  const total=cart.reduce((s,c)=>s+c.price*c.qty,0);
+  if(!currentUser){toast('Inicia sesión como cliente','err');return;}
+  if((currentUser.balance||0)<total){toast('Saldo insuficiente — solicita una recarga en tu panel','err');return;}
+  try{
+    const next=(currentUser.balance||0)-total;
+    await update(ref(db,'users/'+currentUser.key),{balance:next});
+    const order={
+      customer:name,contact,
+      paymentMethod:'saldo',
+      userKey:currentUser.key,
+      userId:currentUser.userId,
+      items:cart.map(c=>({k:c.k,name:c.name,price:c.price,qty:c.qty,productType:products[c.k]?.productType||''})),
+      total:total.toFixed(2),
+      status:'pagado',
+      createdAt:Date.now()
+    };
+    await push(ref(db,'orders'),order);
+    currentUser.balance=next;
+    updateBalanceUI();
+    toast('Pedido confirmado ✦ descuento aplicado a tu saldo','ok');
+    cart=[];updateCart();closeCheckout();
+  }catch(e){toast('Error al procesar el pago','err');}
+}
+
+// ── IMAGEN DE PRODUCTO ──
+function compressImage(file,maxW=640,quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(),reader=new FileReader();
+    reader.onload=e=>{img.onload=()=>{
+      const scale=Math.min(1,maxW/img.width);
+      const w=Math.round(img.width*scale),h=Math.round(img.height*scale);
+      const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg',quality));
+    };img.onerror=reject;img.src=e.target.result;};
+    reader.onerror=reject;reader.readAsDataURL(file);
+  });
+}
+async function onProductImage(ev){
+  const file=ev.target.files[0];if(!file) return;
+  if(!file.type.startsWith('image/')){toast('Selecciona un archivo de imagen','err');return;}
+  try{
+    pImageData=await compressImage(file);
+    $('pImgPreview').innerHTML=`<img src="${pImageData}" alt="preview"/>`;
+  }catch(e){toast('Error al procesar la imagen','err');}
+}
+function clearProductImage(){pImageData=null;$('pImageInput').value='';$('pImgPreview').innerHTML='Sin imagen';}
+
+// ── OWNER: PRODUCTOS ──
+async function save(){
+  const name=$('pName').value.trim(),price=parseFloat($('pPrice').value);
+  if(!name||isNaN(price)||price<0){toast('Completa nombre y precio','err');return;}
+  const data={name,price,category:$('pCat').value,stock:parseInt($('pStock').value)||0,desc:$('pDesc').value.trim(),badge:$('pBadge').value,productType:$('pType').value||''};
+  if(pImageData!==null) data.image=pImageData;
+  try{
+    if(editKey){await update(ref(db,'products/'+editKey),data);toast('Producto actualizado');editKey=null;$('formTitle').textContent='Agregar producto';}
+    else{await push(ref(db,'products'),data);toast('Producto agregado','ok');}
+    clearForm();
+  }catch(e){toast('Error al guardar','err');}
+}
+function editProd(k){
+  const p=products[k];if(!p) return;
+  editKey=k;$('pName').value=p.name;$('pPrice').value=p.price;$('pCat').value=p.category;
+  $('pStock').value=p.stock;$('pDesc').value=p.desc||'';$('pBadge').value=p.badge||'';
+  $('pType').value=p.productType||'';
+  pImageData=p.image?p.image:null;
+  $('pImgPreview').innerHTML=p.image?`<img src="${p.image}" alt="preview"/>`:'Sin imagen';
+  $('pImageInput').value='';
+  $('formTitle').textContent=`Editando: ${p.name}`;
+  ownerTab('productos',document.querySelector('.owner-tab'));
+  const f=$('addProductForm');
+  f.scrollIntoView({behavior:'smooth',block:'center'});
+  f.style.borderColor='rgba(191,168,255,.5)';f.style.boxShadow='0 0 0 2px rgba(191,168,255,.08)';
+  setTimeout(()=>{f.style.borderColor='';f.style.boxShadow='';},2200);
+  toast(`Editando: ${p.name}`);
+}
+async function delProd(k){
+  const p=products[k];if(!p) return;
+  if(!confirm(`¿Eliminar "${p.name}"? No se puede deshacer.`)) return;
+  try{await remove(ref(db,'products/'+k));toast('Producto eliminado');}
+  catch(e){toast('Error al eliminar','err');}
+}
+async function toggleStock(k){
+  const p=products[k];if(!p) return;
+  const ns=p.stock>0?0:10,nb=ns===0?'out':(p.badge==='out'?'':p.badge);
+  try{await update(ref(db,'products/'+k),{stock:ns,badge:nb});toast(ns>0?'Stock activado':'Producto desactivado');}
+  catch(e){toast('Error','err');}
+}
+function clearForm(){
+  ['pName','pPrice','pStock','pDesc'].forEach(id=>$(id).value='');
+  if($('pCat').options.length) $('pCat').selectedIndex=0;
+  $('pBadge').value='';$('pType').value='';editKey=null;$('formTitle').textContent='Agregar producto';
+  clearProductImage();
+}
+function renderAdminTable(){
+  if(!Object.keys(products).length){
+    $('adminTbody').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">Sin productos. Agrega el primero.</td></tr>`;return;
+  }
+  $('adminTbody').innerHTML=Object.entries(products).map(([k,p])=>{
+    const init=(p.name||'X').charAt(0).toUpperCase();
+    const sc=p.stock<=0?'stock-out':p.stock<=5?'stock-low':'stock-ok';
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px">
+        <div class="prod-thumb" style="background:${catBg(p.category)}">${p.image?`<img src="${p.image}" alt="${p.name}"/>`:init}</div>
+        <div><div class="tbl-prod-name">${p.name}</div><div class="tbl-prod-sub">${(p.desc||'').substring(0,40)}${(p.desc||'').length>40?'…':''}</div></div>
+      </div></td>
+      <td style="color:var(--muted);font-size:.77rem">${p.category||'—'}</td>
+      <td style="font-weight:500">${fmt(p.price)} MXN</td>
+      <td class="${sc}">${p.stock}</td>
+      <td style="font-size:.77rem">${BADGE_LABELS[p.badge||'']}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn-icon" onclick="window._xoda.editProd('${k}')" title="Editar">✎</button>
+        <button class="btn-icon" onclick="window._xoda.toggleStock('${k}')" title="${p.stock>0?'Desactivar':'Activar'}">${p.stock>0?'◉':'◌'}</button>
+        <button class="btn-icon danger" onclick="window._xoda.delProd('${k}')" title="Eliminar">×</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── OWNER: PEDIDOS ──
+function renderOrders(){
+  const entries=Object.entries(orders).sort(([,a],[,b])=>b.createdAt-a.createdAt);
+  $('ordersCount').textContent=`${entries.length} pedido${entries.length!==1?'s':''}`;
+  if(!entries.length){$('ordersTbody').innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px">Sin pedidos aún</td></tr>`;return;}
+  $('ordersTbody').innerHTML=entries.map(([k,o])=>{
+    const date=new Date(o.createdAt).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const summary=(o.items||[]).map(it=>`${it.name} ×${it.qty}`).join(', ');
+    const sid=k.slice(-6).toUpperCase();
+    return `<tr>
+      <td style="font-size:.7rem;color:var(--muted);font-family:monospace">#${sid}</td>
+      <td style="font-weight:500">${o.customer}</td>
+      <td style="font-size:.77rem;color:var(--muted)">${o.contact}</td>
+      <td style="font-size:.74rem;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${summary}">${summary}</td>
+      <td style="font-weight:600">${fmt(o.total)} MXN</td>
+      <td style="font-size:.74rem;color:var(--muted)">${o.transferRef||'—'}</td>
+      <td>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select class="status-sel" onchange="window._xoda.updateOrderStatus('${k}',this.value)">
+            ${['pendiente','pagado','enviado','entregado'].map(s=>`<option value="${s}"${o.status===s?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+          </select>
+          <button class="btn-icon" onclick="window._xoda.ownerTab('clientes',document.querySelectorAll('.owner-tab')[2]);window._xoda.openDeliveryPanel('${k}')" title="Datos de entrega al cliente" style="font-size:.75rem;width:auto;padding:4px 8px;border-radius:8px">📦 Entrega</button>
+        </div>
+      </td>
+      <td style="font-size:.7rem;color:var(--muted);white-space:nowrap">${date}</td>
+    </tr>`;
+  }).join('');
+}
+async function updateOrderStatus(k,status){
+  try{await update(ref(db,'orders/'+k),{status});toast('Estado actualizado');}
+  catch(e){toast('Error','err');}
+}
+
+// ── OWNER: BANCO ──
+function loadBankForm(){
+  $('bBanco').value  =bankConfig.bank||'';
+  $('bTitular').value=bankConfig.holder||'';
+  $('bCuenta').value =bankConfig.account||'';
+  $('bTipo').value   =bankConfig.type||'';
+  $('bNota').value   =bankConfig.notes||'';
+  updateBankPreview();
+}
+function updateBankPreview(){
+  const {bank,holder,account,type,notes}=bankConfig;
+  if(!bank&&!account){$('bankPreview').style.display='none';return;}
+  $('bankPreview').style.display='block';
+  $('bankPreview').innerHTML=`<div style="font-size:.61rem;letter-spacing:.15em;text-transform:uppercase;color:var(--violet);margin-bottom:10px">Vista previa del cliente</div>`
+    +[['Banco',bank],['Titular',holder],['Cuenta',account],['Tipo',type]].filter(([,v])=>v).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.83rem"><span style="color:var(--muted)">${k}</span><span>${v}</span></div>`).join('')
+    +(notes?`<div style="font-size:.74rem;color:var(--gold);margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);line-height:1.6">◈ ${notes}</div>`:'');
+}
+async function saveBank(){
+  const data={bank:$('bBanco').value.trim(),holder:$('bTitular').value.trim(),account:$('bCuenta').value.trim(),type:$('bTipo').value.trim(),notes:$('bNota').value.trim()};
+  if(!data.bank||!data.account){toast('Ingresa banco y número de cuenta','err');return;}
+  try{await set(ref(db,'config/bank'),data);bankConfig=data;updateBankPreview();toast('Datos bancarios guardados','ok');}
+  catch(e){toast('Error al guardar','err');}
+}
+
+// ── OWNER: CLIENTES / SALDO ──
+function renderUsers(){
+  const entries=Object.entries(users);
+  $('usersCount').textContent=`${entries.length} cliente${entries.length!==1?'s':''}`;
+  // Populate saldo tab select
+  const sel=$('ownerBalanceSelect');
+  if(sel){
+    sel.innerHTML=entries.length
+      ?entries.sort(([,a],[,b])=>(b.createdAt||0)-(a.createdAt||0)).map(([k,u])=>`<option value="${k}">#${u.userId||'?'} ${u.name} — ${fmt(u.balance||0)} MXN</option>`).join('')
+      :`<option value="">Sin clientes</option>`;
+  }
+  if(!entries.length){$('usersTbody').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">Sin clientes registrados aún</td></tr>`;return;}
+  $('usersTbody').innerHTML=entries.sort(([,a],[,b])=>(b.createdAt||0)-(a.createdAt||0)).map(([k,u])=>{
+    const date=u.createdAt?new Date(u.createdAt).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
+    return `<tr>
+      <td style="font-size:.72rem;color:var(--violet);font-family:monospace;font-weight:700">${u.userId||'—'}</td>
+      <td style="font-weight:500">${u.name}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${u.email}</td>
+      <td><span class="balance-badge" style="display:inline-flex">◈ ${fmt(u.balance||0)} MXN</span></td>
+      <td style="font-size:.74rem;color:var(--muted)">${date}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn-icon" title="Ver pedidos" onclick="window._xoda.ownerTab('pedidos',document.querySelectorAll('.owner-tab')[1])">◉</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+async function applyOwnerBalance(){
+  const key=$('ownerBalanceSelect').value;
+  if(!key){toast('Selecciona un cliente','err');return;}
+  const amount=parseFloat($('ownerBalanceAmt').value);
+  if(isNaN(amount)||amount<=0){toast('Ingresa un monto válido','err');return;}
+  const op=$('ownerBalanceOp').value;
+  const u=users[key];if(!u){toast('Cliente no encontrado','err');return;}
+  const current=u.balance||0;
+  const next=op==='sub'?Math.max(0,current-amount):current+amount;
+  try{
+    await update(ref(db,'users/'+key),{balance:next});
+    $('ownerBalanceAmt').value='';$('ownerBalanceNote').value='';
+    toast(`Saldo de ${u.name}: ${fmt(current)} → ${fmt(next)} MXN`,'ok');
+  }catch(e){toast('Error al actualizar saldo','err');}
+}
+
+// ── OWNER: BALANCE REQUESTS ──
+let balanceRequests={};
+function renderBalanceRequests(reqs){
+  balanceRequests=reqs;
+  const entries=Object.entries(reqs).filter(([,r])=>r.status==='pendiente');
+  const nb=$('saldoNotifBadge');
+  if(nb) nb.style.display=entries.length?'inline-flex':'none';
+  $('balanceReqCount').textContent=entries.length?`${entries.length} pendiente${entries.length!==1?'s':''}`:entries.length===0&&Object.keys(reqs).length?`${Object.keys(reqs).length} total`:'';
+  const el=$('balanceReqList');if(!el) return;
+  if(!Object.keys(reqs).length){el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">Sin solicitudes aún</div>`;return;}
+  const all=Object.entries(reqs).sort(([,a],[,b])=>b.createdAt-a.createdAt);
+  el.innerHTML=all.map(([k,r])=>{
+    const date=new Date(r.createdAt).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const isPending=r.status==='pendiente';
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid ${isPending?'rgba(200,169,110,.25)':'rgba(255,255,255,.07)'};border-radius:14px;padding:16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:.82rem;font-weight:600;color:var(--white)">${r.userName} <span style="color:var(--muted);font-weight:400;font-size:.72rem">#${r.userId||'?'}</span></div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${r.userEmail}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.15rem;font-weight:700;color:var(--gold)">${fmt(r.amount)} MXN</div>
+          <div style="font-size:.68rem;color:var(--muted)">${date}</div>
+        </div>
+      </div>
+      ${r.ref?`<div style="font-size:.75rem;color:var(--muted);margin-bottom:10px;padding:8px;background:rgba(255,255,255,.03);border-radius:8px">Ref: ${r.ref}</div>`:''}
+      ${isPending?`<div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-glass btn-primary" onclick="window._xoda.approveBalanceReq('${k}')" style="font-size:.78rem;padding:8px 16px">✓ Aprobar y aplicar saldo</button>
+        <button class="btn-glass" onclick="window._xoda.rejectBalanceReq('${k}')" style="font-size:.78rem;padding:8px 14px;border-color:rgba(248,113,113,.3)">✕ Rechazar</button>
+      </div>`:`<span style="font-size:.7rem;color:${r.status==='aprobado'?'var(--ok)':'var(--err)'};background:${r.status==='aprobado'?'rgba(110,231,183,.08)':'rgba(248,113,113,.08)'};border:1px solid ${r.status==='aprobado'?'rgba(110,231,183,.2)':'rgba(248,113,113,.2)'};border-radius:100px;padding:3px 10px">${r.status==='aprobado'?'✓ Aprobado':'✕ Rechazado'}</span>`}
+    </div>`;
+  }).join('');
+}
+async function approveBalanceReq(k){
+  const r=balanceRequests[k];if(!r||r.status!=='pendiente') return;
+  const u=users[r.userKey];if(!u){toast('Usuario no encontrado','err');return;}
+  const next=(u.balance||0)+r.amount;
+  try{
+    await update(ref(db,'users/'+r.userKey),{balance:next});
+    await update(ref(db,'balanceRequests/'+k),{status:'aprobado',resolvedAt:Date.now()});
+    toast(`Saldo aprobado — ${r.userName} ahora tiene ${fmt(next)} MXN`,'ok');
+  }catch(e){toast('Error','err');}
+}
+async function rejectBalanceReq(k){
+  try{
+    await update(ref(db,'balanceRequests/'+k),{status:'rechazado',resolvedAt:Date.now()});
+    toast('Solicitud rechazada');
+  }catch(e){toast('Error','err');}
+}
+
+// ── CLIENT: BALANCE REQUEST ──
+function openBalanceRequest(){
+  renderTransferBox();
+  $('reqAmount').value='';$('reqRef').value='';
+  $('balanceReqModal').classList.add('open');document.body.style.overflow='hidden';
+}
+function closeBalanceRequest(){$('balanceReqModal').classList.remove('open');document.body.style.overflow='';}
+$('balanceReqModal').addEventListener('click',e=>{if(e.target.id==='balanceReqModal') closeBalanceRequest();});
+async function submitBalanceRequest(){
+  if(!currentUser){toast('Inicia sesión','err');return;}
+  const amount=parseFloat($('reqAmount').value);
+  const refTxt=$('reqRef').value.trim();
+  if(isNaN(amount)||amount<=0){toast('Ingresa un monto válido','err');return;}
+  try{
+    await push(ref(db,'balanceRequests'),{
+      userKey:currentUser.key,userId:currentUser.userId,
+      userName:currentUser.name,userEmail:currentUser.email,
+      amount,ref:refTxt||'—',status:'pendiente',createdAt:Date.now()
+    });
+    toast('Solicitud enviada — el owner la revisará pronto','ok');
+    closeBalanceRequest();
+  }catch(e){toast('Error al enviar solicitud','err');}
+}
+
+// ── CLIENT: MIS PEDIDOS ──
+function renderClientOrders(mine){
+  const entries=Object.entries(mine).sort(([,a],[,b])=>b.createdAt-a.createdAt);
+  $('clientOrdersCount').textContent=`${entries.length} pedido${entries.length!==1?'s':''}`;
+  if(!entries.length){
+    $('clientOrdersList').innerHTML=`<div class="client-orders-empty"><div class="empty-sym">◌</div><p>Aún no tienes pedidos</p></div>`;
+    return;
+  }
+  $('clientOrdersList').innerHTML=entries.map(([k,o])=>{
+    const date=new Date(o.createdAt).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const sid=k.slice(-6).toUpperCase();
+    const statusColors={pendiente:'var(--gold)',pagado:'var(--violet)',enviado:'var(--ok)',entregado:'#34d399'};
+    const statusColor=statusColors[o.status]||'var(--muted)';
+    // Check if has delivery data
+    const hasDelivery=o.delivery&&o.status==='entregado';
+    return `<div class="client-order-card">
+      <div class="client-order-hdr">
+        <div>
+          <div class="client-order-id">Pedido #${sid}</div>
+          <div class="client-order-date">${date}</div>
+        </div>
+        <span class="s-badge s-${o.status}" style="color:${statusColor}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
+      </div>
+      <div class="client-order-items">
+        ${(o.items||[]).map(it=>`<div class="client-order-item"><span>${it.name} × ${it.qty}</span><span>${fmt(it.price*it.qty)} MXN</span></div>`).join('')}
+      </div>
+      <div class="client-order-total">${fmt(o.total)} MXN</div>
+      <div class="client-order-method">Pago: ${o.paymentMethod||'—'}</div>
+      ${hasDelivery?renderDeliveryCard(o.delivery):''}
+    </div>`;
+  }).join('');
+}
+function renderDeliveryCard(d){
+  if(!d) return '';
+  const typeLabel={streaming:'Streaming / Cuenta',codigo:'Código',link:'Link / Descarga',otro:'Entrega'}[d.type]||'Entrega';
+  let rows='';
+  if(d.platform) rows+=deliveryRow('Plataforma',d.platform,false);
+  if(d.user)     rows+=deliveryRow('Usuario',d.user,true);
+  if(d.password) rows+=deliveryRow('Contraseña',d.password,true);
+  if(d.code)     rows+=deliveryRow('Código',d.code,true);
+  if(d.link)     rows+=deliveryRow('Link',`<a href="${d.link}" target="_blank" style="color:var(--violet)">${d.link}</a>`,false);
+  if(d.notes)    rows+=`<div style="font-size:.75rem;color:var(--gold);margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);line-height:1.65">◈ ${d.notes}</div>`;
+  return `<div class="delivery-card">
+    <div class="delivery-label">✦ ${typeLabel} — Datos de acceso</div>
+    ${rows}
+  </div>`;
+}
+function deliveryRow(key,val,copyable){
+  return `<div class="delivery-row">
+    <span class="delivery-key">${key}</span>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="delivery-val">${val}</span>
+      ${copyable?`<button class="copy-btn" onclick="navigator.clipboard.writeText('${val}').then(()=>window._xoda._toast('Copiado'))">copiar</button>`:''}
+    </div>
+  </div>`;
+}
+function _toast(msg){toast(msg,'ok');}
+
+// ── OWNER: DELIVERY DATA ──
+let currentDeliveryOrderKey=null;
+function openDeliveryPanel(orderKey){
+  currentDeliveryOrderKey=orderKey;
+  $('deliveryOrderKey').value=orderKey;
+  const o=orders[orderKey];
+  $('deliveryDataTitle').textContent=`Datos de entrega — #${orderKey.slice(-6).toUpperCase()}`;
+  // Pre-fill if exists
+  const d=o?.delivery||{};
+  $('delPlatform').value=d.platform||'';
+  $('delProductType').value=d.type||'streaming';
+  $('delUser').value=d.user||'';
+  $('delPass').value=d.password||'';
+  $('delCode').value=d.code||'';
+  $('delLink').value=d.link||'';
+  $('delNotes').value=d.notes||'';
+  toggleDeliveryType();
+  $('deliveryDataPanel').style.display='block';
+  $('deliveryDataPanel').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function closeDeliveryPanel(){$('deliveryDataPanel').style.display='none';currentDeliveryOrderKey=null;}
+function toggleDeliveryType(){
+  const t=$('delProductType').value;
+  $('delUserGroup').style.display=(t==='streaming'||t==='otro')?'flex':'none';
+  $('delPassGroup').style.display=(t==='streaming'||t==='otro')?'flex':'none';
+  $('delCodeGroup').style.display=t==='codigo'?'flex':'none';
+  $('delLinkGroup').style.display=t==='link'?'flex':'none';
+}
+async function saveDeliveryData(){
+  const k=currentDeliveryOrderKey;if(!k){toast('Error: sin pedido seleccionado','err');return;}
+  const t=$('delProductType').value;
+  const d={
+    type:t,
+    platform:$('delPlatform').value.trim(),
+    user:$('delUser').value.trim(),
+    password:$('delPass').value.trim(),
+    code:$('delCode').value.trim(),
+    link:$('delLink').value.trim(),
+    notes:$('delNotes').value.trim(),
+    savedAt:Date.now()
+  };
+  try{
+    await update(ref(db,'orders/'+k),{delivery:d,status:'entregado'});
+    toast('Datos guardados y pedido marcado como Entregado','ok');
+    closeDeliveryPanel();
+  }catch(e){toast('Error al guardar','err');}
+}
+function onProdTypeChange(){} // placeholder
+
+// ── STATS ──
+function updateStats(){
+  const prods=Object.values(products),ords=Object.values(orders);
+  const avg=prods.length?prods.reduce((s,p)=>s+parseFloat(p.price),0)/prods.length:0;
+  $('stTotal').textContent=prods.length;
+  $('stStock').textContent=prods.filter(p=>p.stock>0).length;
+  $('stAvg').textContent=fmt(avg);
+  $('stOrders').textContent=ords.length;
+  $('stPending').textContent=ords.filter(o=>o.status==='pendiente').length;
+}
+
+// ── EXPONER ──
+window._xoda={
+  login,logout,goTo,
+  setLoginRole,showRegister,showClientLogin,clientLogin,register,_logoTap,
+  openMobileNav,closeMobileNav,
+  ownerTab,filterBy,
+  addCart,removeCart,qtyCart,openCart,closeCart,
+  openCheckout,closeCheckout,submitOrder,
+  save,editProd,delProd,toggleStock,clearForm,onProdTypeChange,
+  onProductImage,clearProductImage,
+  updateOrderStatus,
+  applyOwnerBalance,
+  approveBalanceReq,rejectBalanceReq,
+  openBalanceRequest,closeBalanceRequest,submitBalanceRequest,
+  openDeliveryPanel,closeDeliveryPanel,toggleDeliveryType,saveDeliveryData,
+  saveBank,
+  addCategory,deleteCategory,
+  addFeature,removeFeature,saveFeatures,
+  saveHero,saveAbout,saveShop,saveFooter,
+  previewTheme,saveTheme,
+  _toast,
+};
+</script>
+</body>
+</html>
